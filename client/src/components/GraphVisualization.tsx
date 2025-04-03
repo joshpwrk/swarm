@@ -821,7 +821,7 @@ export default function GraphVisualization({
                   GO TO ACCOUNT
                 </a>
                 <div className="text-[9px] md:text-[10px] text-primary/60 mt-1 md:mt-0 md:ml-3 italic font-sans">
-                  NOTE: does not work for EOAs. Use derive-cockpit.replit.app via subaccount_ids instead
+                  NOTE: does not work for EOAs. Use <a href="https://derive-cockpit.replit.app" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">derive-cockpit.replit.app</a> via subaccount_ids instead
                 </div>
               </div>
             </div>
