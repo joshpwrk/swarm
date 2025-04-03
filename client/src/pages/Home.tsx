@@ -6,7 +6,7 @@ import { Filters, VisualSettings } from "@/types/trade";
 export default function Home() {
   const [filters, setFilters] = useState<Filters>({
     currency: "ETH",
-    instrumentType: "perp",
+    instrumentType: "option",
     instrumentName: "", // Leave empty as instrument_name will be null in the API
     fromTimestamp: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
     toTimestamp: Date.now(),

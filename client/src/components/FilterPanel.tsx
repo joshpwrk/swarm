@@ -120,40 +120,75 @@ export default function FilterPanel({
 
   // Update date inputs when filters change or component mounts
   useEffect(() => {
-    const fromDate = formatDateForInput(filters.fromTimestamp);
+    // Set end time to current timestamp
     const toDate = formatDateForInput(filters.toTimestamp);
-
-    // Set the date input values
-    const fromEl = document.getElementById("fromTimestamp") as HTMLInputElement;
     const toEl = document.getElementById("toTimestamp") as HTMLInputElement;
-    if (fromEl) fromEl.value = fromDate;
     if (toEl) toEl.value = toDate;
+    
+    // Initialize the hidden input with the from timestamp
+    const hiddenFromEl = document.getElementById("hiddenFromTimestamp") as HTMLInputElement;
+    if (hiddenFromEl) {
+      hiddenFromEl.value = filters.fromTimestamp.toString();
+    }
+    
+    // Set the correct active state for time range buttons
+    const oneDay = 24 * 60 * 60 * 1000;
+    const isLastDay = (filters.toTimestamp - filters.fromTimestamp) <= oneDay;
+    
+    const last24hrBtn = document.getElementById("last24hr");
+    const lastWeekBtn = document.getElementById("lastWeek");
+    
+    if (last24hrBtn && lastWeekBtn) {
+      if (isLastDay) {
+        last24hrBtn.setAttribute("data-state", "active");
+        lastWeekBtn.setAttribute("data-state", "inactive");
+      } else {
+        last24hrBtn.setAttribute("data-state", "inactive");
+        lastWeekBtn.setAttribute("data-state", "active");
+      }
+    }
   }, [filters.fromTimestamp, filters.toTimestamp]);
 
   const handleApplyFilters = () => {
-    // Get the values from the form inputs for dates
-    const fromEl = document.getElementById("fromTimestamp") as HTMLInputElement;
+    // Get the end time from the input
     const toEl = document.getElementById("toTimestamp") as HTMLInputElement;
+    // Get the hidden from timestamp value
+    const hiddenFromEl = document.getElementById("hiddenFromTimestamp") as HTMLInputElement;
 
-    if (!fromEl?.value || !toEl?.value) {
-      // If dates are not provided, alert the user
-      alert("Please select both FROM and TO dates");
-      return;
+    // If end time is not provided, set it to now
+    let toTimestamp = Date.now();
+    if (toEl?.value) {
+      toTimestamp = new Date(toEl.value).getTime();
+    } else {
+      // Set the input value to current time
+      toEl.value = formatDateForInput(toTimestamp);
     }
 
-    const fromTimestamp = new Date(fromEl.value).getTime();
-    const toTimestamp = new Date(toEl.value).getTime();
+    // Get from timestamp from hidden input or calculate based on selected range
+    let fromTimestamp = Date.now() - 24 * 60 * 60 * 1000; // Default to 24 hours ago
+    if (hiddenFromEl?.value) {
+      fromTimestamp = parseInt(hiddenFromEl.value);
+    }
 
-    // Enforce 24-hour maximum time range
+    // Check if the "lastWeek" button is active
+    const lastWeekBtn = document.getElementById("lastWeek");
+    const isLastWeekActive = lastWeekBtn?.getAttribute("data-state") === "active";
+    
+    // Validate time range
+    const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-    if (toTimestamp - fromTimestamp > oneDay) {
-      alert("Time range cannot exceed 24 hours. Please adjust your selection.");
+    
+    // Enforce maximum time based on selected range
+    const maxRange = isLastWeekActive ? oneWeek : oneDay;
+    if (toTimestamp - fromTimestamp > maxRange) {
+      const timeText = isLastWeekActive ? "7 days" : "24 hours";
+      alert(`Time range cannot exceed ${timeText} due to API constraints. Please adjust your selection.`);
       return;
     }
-
+    
     // Ensure from date is before to date
     if (fromTimestamp >= toTimestamp) {
-      alert("FROM date must be earlier than TO date");
+      alert("The calculated start time must be earlier than the end time");
       return;
     }
 
@@ -297,60 +332,118 @@ export default function FilterPanel({
               <Label className="block text-xs uppercase tracking-wider text-foreground mb-1">
                 TIME RANGE
               </Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="block text-xs uppercase text-foreground/70 mb-1">
-                    FROM
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    id="fromTimestamp"
-                    step="1" // Add seconds granularity
-                    className="w-full bg-black border border-primary text-foreground"
-                  />
-                </div>
-                <div>
-                  <Label className="block text-xs uppercase text-foreground/70 mb-1">
-                    TO
-                  </Label>
-                  <Input
-                    type="datetime-local"
-                    id="toTimestamp"
-                    step="1" // Add seconds granularity
-                    className="w-full bg-black border border-primary text-foreground"
-                  />
-                </div>
+              
+              {/* End Time */}
+              <div className="mb-3">
+                <Label className="block text-xs uppercase text-foreground/70 mb-1">
+                  END TIME
+                </Label>
+                <Input
+                  type="datetime-local"
+                  id="toTimestamp"
+                  step="1" // Add seconds granularity
+                  className="w-full bg-black border border-primary text-foreground"
+                />
               </div>
-              <div className="flex justify-between w-full mt-1">
-                <span className="text-xs text-primary/70 italic">
-                  24hr max range
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-6 px-2 py-0 bg-black border-primary text-primary"
-                  onClick={() => {
-                    // Set to last 24 hours
-                    const toDate = new Date();
-                    const fromDate = new Date(
-                      toDate.getTime() - 24 * 60 * 60 * 1000,
-                    );
+              
+              {/* Time Range Toggle */}
+              <div className="bg-black/50 border border-primary/50 p-3 rounded-sm">
+                <Label className="block text-xs uppercase text-foreground/70 mb-2">
+                  LOOKBACK PERIOD
+                </Label>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    id="last24hr"
+                    className="text-xs py-1 bg-black border-primary text-primary data-[state=active]:bg-primary data-[state=active]:text-white"
+                    data-state="active"
+                    onClick={(e) => {
+                      // Toggle active state for buttons
+                      document.getElementById('last24hr')?.setAttribute('data-state', 'active');
+                      document.getElementById('lastWeek')?.setAttribute('data-state', 'inactive');
+                      
+                      // Set to last 24 hours
+                      const toDate = new Date();
+                      const fromDate = new Date(
+                        toDate.getTime() - 24 * 60 * 60 * 1000, // 24 hours
+                      );
 
-                    const fromEl = document.getElementById(
-                      "fromTimestamp",
-                    ) as HTMLInputElement;
-                    const toEl = document.getElementById(
-                      "toTimestamp",
-                    ) as HTMLInputElement;
-
-                    if (fromEl)
-                      fromEl.value = formatDateForInput(fromDate.getTime());
-                    if (toEl) toEl.value = formatDateForInput(toDate.getTime());
-                  }}
-                >
-                  RESET TO LAST 24HR
-                </Button>
+                      // Update the hidden fromTimestamp value
+                      const toEl = document.getElementById(
+                        "toTimestamp",
+                      ) as HTMLInputElement;
+                      
+                      if (toEl) {
+                        // If no custom end time set, default to now
+                        if (!toEl.value) {
+                          toEl.value = formatDateForInput(toDate.getTime());
+                        }
+                      }
+                      
+                      // Store the from timestamp in a hidden input
+                      const hiddenFromEl = document.getElementById('hiddenFromTimestamp') as HTMLInputElement;
+                      if (hiddenFromEl) {
+                        hiddenFromEl.value = fromDate.getTime().toString();
+                      }
+                    }}
+                  >
+                    LAST 24 HOURS
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    id="lastWeek"
+                    className="text-xs py-1 bg-black border-primary text-primary data-[state=active]:bg-primary data-[state=active]:text-white"
+                    data-state="inactive"
+                    onClick={(e) => {
+                      // Toggle active state for buttons
+                      document.getElementById('last24hr')?.setAttribute('data-state', 'inactive');
+                      document.getElementById('lastWeek')?.setAttribute('data-state', 'active');
+                      
+                      // Set to last week
+                      const toDate = new Date();
+                      const fromDate = new Date(
+                        toDate.getTime() - 7 * 24 * 60 * 60 * 1000, // 7 days
+                      );
+                      
+                      // Update the to timestamp if not set
+                      const toEl = document.getElementById(
+                        "toTimestamp",
+                      ) as HTMLInputElement;
+                      
+                      if (toEl) {
+                        // If no custom end time set, default to now
+                        if (!toEl.value) {
+                          toEl.value = formatDateForInput(toDate.getTime());
+                        }
+                      }
+                      
+                      // Store the from timestamp in a hidden input
+                      const hiddenFromEl = document.getElementById('hiddenFromTimestamp') as HTMLInputElement;
+                      if (hiddenFromEl) {
+                        hiddenFromEl.value = fromDate.getTime().toString();
+                      }
+                    }}
+                  >
+                    LAST WEEK
+                  </Button>
+                </div>
+                
+                {/* Hidden input to store fromTimestamp */}
+                <input 
+                  type="hidden" 
+                  id="hiddenFromTimestamp" 
+                  value={Date.now() - 24 * 60 * 60 * 1000} // Default to 24 hours ago
+                />
+                
+                <div className="text-xs text-primary/70 italic mt-2">
+                  Note: Maximum lookback period is 7 days due to API constraints
+                </div>
               </div>
             </div>
 
