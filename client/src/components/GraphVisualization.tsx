@@ -218,7 +218,7 @@ export default function GraphVisualization({
       .enter()
       .append("circle")
       .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10))
-      .attr("class", d => `node ${d.type}`)
+      .attr("class", "node")
       .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount))
       .call(d3.drag<SVGCircleElement, GraphNode>()
         .on("start", dragStarted)
@@ -322,6 +322,7 @@ export default function GraphVisualization({
     
     const newNodes = nodes.enter()
       .append("circle")
+      .attr("class", "node")
       .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount))
       .attr("stroke", "#E5E7EB")
       .attr("stroke-width", 1)
@@ -343,9 +344,10 @@ export default function GraphVisualization({
       .on("mouseover", showTooltip)
       .on("mouseout", hideTooltip);
     
-    // Update all nodes and set radius based on current scale
+    // Update all nodes (radius and color)
     nodes.merge(newNodes)
-      .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10));
+      .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10))
+      .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount));
     
     // Handle labels based on showLabels setting
     nodesGroup.selectAll("text").remove();
@@ -411,13 +413,26 @@ export default function GraphVisualization({
     const buyRatio = Math.floor((buyCount / total) * 100);
     
     // Create a gradient from red (0, 85%, 60%) to green (142, 76%, 45%)
-    // Use linear interpolation between the two hues
+    // For a clearer visualization, we'll make pure sellers deep red,
+    // pure buyers vivid green, and adjust the gradient between them
+    
+    // For a much stronger visual difference:
+    if (buyRatio === 0) {
+      return "hsl(0, 100%, 50%)"; // Pure red for 100% sellers
+    } else if (buyRatio === 100) {
+      return "hsl(142, 100%, 45%)"; // Pure green for 100% buyers
+    }
+    
+    // Use linear interpolation between the two hues for the gradient
     const hue = Math.floor((buyRatio / 100) * (142 - 0) + 0);
     
-    // Adjust saturation and lightness for more visual appeal
-    // Extreme values (near 0 or 100) get higher saturation
-    const saturation = 80 - Math.abs(buyRatio - 50) * 0.2;
-    const lightness = 50 - Math.abs(buyRatio - 50) * 0.1;
+    // Higher saturation overall for more vivid colors
+    // And make extreme values (near 0 or 100) even more saturated
+    const saturation = 85 - Math.abs(buyRatio - 50) * 0.1; 
+    
+    // Adjust lightness to maintain visibility
+    // Make colors near 50% slightly lighter to stand out less
+    const lightness = 45 + Math.abs(buyRatio - 50) * -0.1;
     
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   };
@@ -445,6 +460,25 @@ export default function GraphVisualization({
   return (
     <>
       <div className="flex-1 relative" id="graph-container">
+        {/* Color Legend - only show when data is loaded and visible */}
+        {!loading && !empty && !error && (
+          <div className="absolute top-4 right-4 bg-black/80 border border-primary p-3 z-10 text-xs font-mono">
+            <div className="text-primary mb-2 uppercase tracking-widest text-xs font-bold">Buy/Sell Ratio</div>
+            <div className="flex items-center space-x-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: 'hsl(0, 100%, 50%)' }}></div>
+              <span className="text-white/70">100% sell</span>
+            </div>
+            <div className="flex items-center space-x-1 mt-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: 'hsl(70, 85%, 45%)' }}></div>
+              <span className="text-white/70">mixed</span>
+            </div>
+            <div className="flex items-center space-x-1 mt-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: 'hsl(142, 100%, 45%)' }}></div>
+              <span className="text-white/70">100% buy</span>
+            </div>
+          </div>
+        )}
+        
         {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center z-10">

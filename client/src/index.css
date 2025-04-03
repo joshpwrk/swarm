@@ -87,14 +87,4 @@ svg text.node-label {
   text-anchor: middle;
 }
 
-svg .buyer {
-  fill: hsl(142, 76%, 45%);
-}
-
-svg .seller {
-  fill: hsl(0, 85%, 60%);
-}
-
-svg .mixed {
-  fill: hsl(196, 100%, 50%);
-}
+/* Node colors now dynamically calculated based on buy/sell ratio */
