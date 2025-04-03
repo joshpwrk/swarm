@@ -260,7 +260,11 @@ export default function GraphVisualization({
         .distance(100))
       .force("charge", d3.forceManyBody().strength(-visualSettings.forceStrength * 10))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collide", d3.forceCollide<GraphNode>().radius(d => Math.max(3, Math.sqrt(d.normalizedSize || 0) * 30 * (visualSettings.nodeSizeScale / 10)) + 5).iterations(2));
+      .force("collide", d3.forceCollide<GraphNode>().radius(d => {
+        // Match the collision radius to the visual radius + a small buffer
+        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        return Math.max(3, d.normalizedSize! * maxSize) + 5;
+      }).iterations(2));
     
     // Draw links
     const links = linksGroup
@@ -277,7 +281,12 @@ export default function GraphVisualization({
       .data(graph.nodes)
       .enter()
       .append("circle")
-      .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10))
+      .attr("r", d => {
+        // Use a fixed maximum size (50 * scale factor) for the largest node
+        // Minimum size of 3 for visibility of small nodes
+        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        return Math.max(3, d.normalizedSize! * maxSize);
+      })
       .attr("class", "node")
       .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount))
       .call(d3.drag<SVGCircleElement, GraphNode>()
@@ -299,7 +308,10 @@ export default function GraphVisualization({
         .text(d => shortenAddress(d.id))
         .attr("font-size", "8px")
         .attr("text-anchor", "middle")
-        .attr("dy", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10) + 12)
+        .attr("dy", d => {
+          const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+          return Math.max(3, d.normalizedSize! * maxSize) + 12;
+        })
         .attr("fill", "#E5E7EB");
     }
     
@@ -354,7 +366,11 @@ export default function GraphVisualization({
       .force("link", d3.forceLink<GraphNode, GraphLink>(graph.links).id(d => d.id).distance(100))
       .force("charge", d3.forceManyBody().strength(-visualSettings.forceStrength * 10))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collide", d3.forceCollide<GraphNode>().radius(d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10) + 5).iterations(2));
+      .force("collide", d3.forceCollide<GraphNode>().radius(d => {
+        // Match the collision radius to the visual radius + a small buffer
+        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        return Math.max(3, d.normalizedSize! * maxSize) + 5;
+      }).iterations(2));
     
     const nodesGroup = svgGroupRef.current.select(".nodes");
     const linksGroup = svgGroupRef.current.select(".links");
@@ -406,7 +422,11 @@ export default function GraphVisualization({
     
     // Update all nodes (radius and color)
     nodes.merge(newNodes)
-      .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10))
+      .attr("r", d => {
+        // Use same fixed maximum size as in initialization
+        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        return Math.max(3, d.normalizedSize! * maxSize);
+      })
       .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount));
     
     // Handle labels based on showLabels setting
@@ -421,7 +441,10 @@ export default function GraphVisualization({
         .text(d => shortenAddress(d.id))
         .attr("font-size", "8px")
         .attr("text-anchor", "middle")
-        .attr("dy", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10) + 12)
+        .attr("dy", d => {
+          const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+          return Math.max(3, d.normalizedSize! * maxSize) + 12;
+        })
         .attr("fill", "#E5E7EB");
     }
     
