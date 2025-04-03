@@ -39,6 +39,7 @@ export default function Home() {
   const [visualSettings, setVisualSettings] = useState<VisualSettings>({
     nodeSizeScale: 10,
     forceStrength: 30,
+    edgeThicknessScale: 10, // Default value for edge thickness (1-20 range)
     showLabels: true,
     showTooltips: true,
   });

@@ -284,7 +284,7 @@ export default function GraphVisualization({
       .enter()
       .append("line")
       .attr("class", "link")
-      .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount)));
+      .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount) * (visualSettings.edgeThicknessScale / 10)));
     
     // Draw nodes
     const nodes = nodesGroup
@@ -409,7 +409,7 @@ export default function GraphVisualization({
       .append("line")
       .attr("stroke", "hsl(220, 100%, 40%)")
       .attr("stroke-opacity", 0.5)
-      .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount)))
+      .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount) * (visualSettings.edgeThicknessScale / 10)))
       .attr("stroke-linecap", "round");
     
     // Update nodes

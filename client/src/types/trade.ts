@@ -14,6 +14,7 @@ export interface Filters {
 export interface VisualSettings {
   nodeSizeScale: number;
   forceStrength: number;
+  edgeThicknessScale: number;
   showLabels: boolean;
   showTooltips: boolean;
 }

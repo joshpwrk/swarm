@@ -530,6 +530,29 @@ export default function FilterPanel({
               </div>
             </div>
 
+            {/* Edge Thickness Scale */}
+            <div>
+              <Label className="block text-xs uppercase tracking-wider text-foreground mb-1">
+                EDGE THICKNESS
+              </Label>
+              <Input
+                type="range"
+                min="1"
+                max="20"
+                value={visualSettings.edgeThicknessScale}
+                onChange={(e) =>
+                  onVisualSettingsChange({
+                    edgeThicknessScale: parseInt(e.target.value),
+                  })
+                }
+                className="w-full accent-secondary bg-black border border-primary/30"
+              />
+              <div className="flex justify-between text-xs text-primary/70 mt-1">
+                <span>THIN</span>
+                <span>THICK</span>
+              </div>
+            </div>
+
             {/* Show Labels */}
             <div className="flex items-center justify-between">
               <Label className="text-xs uppercase tracking-wider text-foreground">
