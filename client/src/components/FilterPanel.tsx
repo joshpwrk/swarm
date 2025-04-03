@@ -215,15 +215,17 @@ export default function FilterPanel({
                       Loading currencies...
                     </SelectItem>
                   ) : currencies && currencies.length > 0 ? (
-                    currencies.map((currency) => (
-                      <SelectItem
-                        key={currency.currency}
-                        value={currency.currency}
-                        className="text-secondary"
-                      >
-                        {currency.currency}
-                      </SelectItem>
-                    ))
+                    [...currencies]
+                      .sort((a, b) => a.currency.localeCompare(b.currency))
+                      .map((currency) => (
+                        <SelectItem
+                          key={currency.currency}
+                          value={currency.currency}
+                          className="text-secondary"
+                        >
+                          {currency.currency}
+                        </SelectItem>
+                      ))
                   ) : (
                     <SelectItem
                       value="no-data"
@@ -264,15 +266,17 @@ export default function FilterPanel({
                       Select currency first
                     </SelectItem>
                   ) : instrumentTypes.length > 0 ? (
-                    instrumentTypes.map((type) => (
-                      <SelectItem
-                        key={type}
-                        value={type}
-                        className="text-secondary"
-                      >
-                        {type.toUpperCase()}
-                      </SelectItem>
-                    ))
+                    [...instrumentTypes]
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((type) => (
+                        <SelectItem
+                          key={type}
+                          value={type}
+                          className="text-secondary"
+                        >
+                          {type.toUpperCase()}
+                        </SelectItem>
+                      ))
                   ) : (
                     <SelectItem
                       value="placeholder"
