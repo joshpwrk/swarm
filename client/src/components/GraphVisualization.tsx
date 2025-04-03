@@ -77,6 +77,10 @@ export default function GraphVisualization({
     const walletMap = new Map<string, WalletNode>();
     const tradeLinks = new Map<string, Partial<GraphLink>>();
     
+    // Get SVG dimensions for initial random positions
+    const width = svgRef.current?.clientWidth || 800;
+    const height = svgRef.current?.clientHeight || 600;
+    
     // Process all trades to identify unique wallets and trades
     data.trades.forEach(trade => {
       // Track wallet stats
@@ -86,7 +90,10 @@ export default function GraphVisualization({
           totalAmount: 0,
           tradeCount: 0,
           buyCount: 0,
-          sellCount: 0
+          sellCount: 0,
+          // Add initial random position for better spread on refresh
+          x: Math.random() * width,
+          y: Math.random() * height
         });
       }
       
@@ -159,11 +166,33 @@ export default function GraphVisualization({
   useEffect(() => {
     if (!svgRef.current || loading || error || empty || graph.nodes.length === 0) return;
     
-    if (!svgGroupRef.current) {
+    // Always fully reinitialize when graph data changes to avoid stacking nodes
+    if (!svgGroupRef.current || graph.nodes.length > 0) {
+      // Clear existing simulation
+      if (simulationRef.current) {
+        simulationRef.current.stop();
+      }
+      
+      // Clear existing SVG content
+      if (svgRef.current) {
+        d3.select(svgRef.current).selectAll("*").remove();
+      }
+      
+      // Reset references
+      svgGroupRef.current = null;
+      
+      // Reinitialize visualization
       initializeVisualization();
     } else {
       updateVisualization();
     }
+    
+    // Cleanup function to properly handle stopping the simulation when unmounting
+    return () => {
+      if (simulationRef.current) {
+        simulationRef.current.stop();
+      }
+    };
   }, [graph, visualSettings, loading, error, empty]);
 
   // Initialize D3 visualization
