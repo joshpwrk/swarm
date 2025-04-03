@@ -73,11 +73,19 @@ export default function FilterPanel({
           (c) => c.currency === filters.currency,
         );
         if (selectedCurrency) {
-          setInstrumentTypes(selectedCurrency.instrument_types);
+          const availableTypes = selectedCurrency.instrument_types;
+          setInstrumentTypes(availableTypes);
+          
+          // Automatically select the first available instrument type
+          if (availableTypes.length > 0 && (!filters.instrumentType || filters.instrumentType === "")) {
+            onFilterChange({
+              instrumentType: availableTypes[0]
+            });
+          }
         }
       }
     }
-  }, [currencies, filters.currency]);
+  }, [currencies, filters.currency, filters.instrumentType, onFilterChange]);
 
   // When instrument type changes, generate potential instrument names
   useEffect(() => {
