@@ -617,8 +617,16 @@ export default function GraphVisualization({
     const ratioEl = panel.querySelector("#info-ratio");
     const subaccountEl = panel.querySelector("#info-subaccounts");
     
-    // Show full wallet address
-    if (walletEl) walletEl.textContent = node.id;
+    // Update wallet address in the hyperlink
+    if (walletEl) {
+      walletEl.textContent = node.id;
+      
+      // Also update the href attribute of the parent <a> element if it exists
+      const walletLink = walletEl.closest('a');
+      if (walletLink) {
+        walletLink.setAttribute('href', `https://www.derive.xyz/user/${node.id}`);
+      }
+    }
     
     // Calculate buy percentage for the ratio display
     const buyPercentage = node.tradeCount > 0 ? Math.round((node.buyCount / node.tradeCount) * 100) : 0;
@@ -665,8 +673,8 @@ export default function GraphVisualization({
     const ratioEl = tooltip.querySelector("#tooltip-ratio");
     const subaccountEl = tooltip.querySelector("#tooltip-subaccounts");
     
-    // Show full wallet address
-    if (walletEl) walletEl.textContent = d.id;
+    // Show shortened wallet address in tooltip
+    if (walletEl) walletEl.textContent = shortenAddress(d.id);
     
     if (amountEl) amountEl.textContent = `$${d.totalNotionalVolume.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${d.totalAmount.toFixed(4)} tokens)`;
     if (countEl) countEl.textContent = d.tradeCount.toString();
@@ -764,7 +772,15 @@ export default function GraphVisualization({
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <div className="flex items-center">
-                <div className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm" id="info-wallet">Wallet Address</div>
+                <a 
+                  href={selectedNode ? `https://www.derive.xyz/user/${selectedNode.id}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm hover:underline"
+                  id="info-wallet"
+                >
+                  Wallet Address
+                </a>
                 <button 
                   onClick={() => selectedNode && copyWalletToClipboard(selectedNode.id)}
                   className="ml-2 p-1 text-primary hover:bg-primary/20 rounded"
