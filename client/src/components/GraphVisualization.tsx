@@ -381,8 +381,8 @@ export default function GraphVisualization({
     
     const tooltip = tooltipRef.current;
     tooltip.style.display = 'block';
-    tooltip.style.left = `${event.pageX + 10}px`;
-    tooltip.style.top = `${event.pageY + 10}px`;
+    tooltip.style.left = `${event.pageX - 2}px`;
+    tooltip.style.top = `${event.pageY - 2}px`;
     
     // Update tooltip content
     const walletEl = tooltip.querySelector("#tooltip-wallet");
@@ -491,10 +491,10 @@ export default function GraphVisualization({
         <div 
           ref={tooltipRef} 
           id="node-tooltip" 
-          className="absolute hidden bg-black border border-primary p-4 shadow-xl text-xs z-20 max-w-xs font-mono"
+          className="absolute hidden bg-black border border-primary p-3 shadow-xl text-xs z-20 max-w-xs font-mono"
         >
-          <div className="font-bold text-primary mb-2 uppercase tracking-widest" id="tooltip-wallet">Wallet Address</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="font-bold text-primary mb-1 uppercase tracking-widest text-xs" id="tooltip-wallet">Wallet Address</div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
             <div className="text-primary/70 uppercase tracking-wider">VOLUME:</div>
             <div id="tooltip-amount" className="text-secondary">0.0000</div>
             <div className="text-primary/70 uppercase tracking-wider">TRADES:</div>
