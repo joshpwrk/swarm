@@ -452,18 +452,45 @@ export default function GraphVisualization({
     simulationRef.current.alpha(1).restart();
   };
 
+  // Check if the device is mobile
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Listen for resize events
+    window.addEventListener('resize', checkMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
   // Track mouse position globally
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (tooltipRef.current && tooltipRef.current.style.display === 'block') {
-        tooltipRef.current.style.left = `${e.clientX + 20}px`;
-        tooltipRef.current.style.top = `${e.clientY - 20}px`;
+        // Different offset values for mobile vs desktop
+        if (isMobile) {
+          // For mobile devices, position the tooltip a bit higher and with more horizontal offset
+          // to prevent finger from covering it
+          tooltipRef.current.style.left = `${e.clientX + 30}px`;
+          tooltipRef.current.style.top = `${e.clientY - 80}px`;
+        } else {
+          // Standard offset for desktop
+          tooltipRef.current.style.left = `${e.clientX + 20}px`;
+          tooltipRef.current.style.top = `${e.clientY - 20}px`;
+        }
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [isMobile]);
   
   // Tooltip functions
   const showTooltip = (event: MouseEvent, d: GraphNode) => {
@@ -474,8 +501,15 @@ export default function GraphVisualization({
     // Make tooltip visible and set initial position
     tooltip.style.display = 'block';
     tooltip.style.position = 'fixed';
-    tooltip.style.left = `${event.clientX + 20}px`;
-    tooltip.style.top = `${event.clientY - 20}px`;
+    
+    // Different positioning for mobile vs desktop
+    if (isMobile) {
+      tooltip.style.left = `${event.clientX + 30}px`;
+      tooltip.style.top = `${event.clientY - 80}px`;
+    } else {
+      tooltip.style.left = `${event.clientX + 20}px`;
+      tooltip.style.top = `${event.clientY - 20}px`;
+    }
     
     // Update tooltip content
     const walletEl = tooltip.querySelector("#tooltip-wallet");
@@ -643,24 +677,49 @@ export default function GraphVisualization({
         <div 
           ref={tooltipRef} 
           id="node-tooltip" 
-          className="fixed hidden bg-black border border-primary p-3 shadow-xl text-xs z-50 max-w-xs font-mono"
+          className="fixed hidden bg-black border border-primary p-2 md:p-3 shadow-xl text-xs z-50 max-w-[280px] md:max-w-xs font-mono"
           style={{ pointerEvents: 'none' }} // Ensure tooltip doesn't interfere with mouse events
         >
-          <div className="font-bold text-primary mb-1 uppercase tracking-widest text-xs" id="tooltip-wallet">Wallet Address</div>
-          <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1">
-            <div className="text-primary/70 uppercase tracking-wider">VOLUME:</div>
-            <div id="tooltip-amount" className="text-secondary">0.0000</div>
-            <div className="text-primary/70 uppercase tracking-wider">TRADES:</div>
-            <div id="tooltip-count" className="text-secondary">0</div>
-            <div className="text-primary/70 uppercase tracking-wider">B/S RATIO:</div>
-            <div id="tooltip-ratio" className="text-secondary">0:0</div>
+          <div className="font-bold text-primary mb-1 uppercase tracking-widest text-[10px] md:text-xs" id="tooltip-wallet">Wallet Address</div>
+          <div className="grid grid-cols-[auto,1fr] gap-x-2 md:gap-x-3 gap-y-1">
+            <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">VOLUME:</div>
+            <div id="tooltip-amount" className="text-secondary text-[10px] md:text-xs">0.0000</div>
+            <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">TRADES:</div>
+            <div id="tooltip-count" className="text-secondary text-[10px] md:text-xs">0</div>
+            <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">B/S RATIO:</div>
+            <div id="tooltip-ratio" className="text-secondary text-[10px] md:text-xs">0:0</div>
           </div>
         </div>
       </div>
 
       {/* Status Bar */}
-      <div className="bg-black border-t border-primary px-6 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-8">
+      <div className="bg-black border-t border-primary px-3 md:px-6 py-2 md:py-3">
+        {/* Mobile Status Bar - 2x2 Grid */}
+        <div className="md:hidden grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">NODES:</span>
+            <span className="ml-2 text-secondary">{stats.nodeCount}</span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">EDGES:</span>
+            <span className="ml-2 text-secondary">{stats.edgeCount}</span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">TOKEN:</span>
+            <span className="ml-2 text-secondary">
+              {stats.totalVolume.toFixed(4)} {filters.currency}
+            </span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">NOTIONAL:</span>
+            <span className="ml-2 text-secondary">
+              ${stats.totalNotionalVolume ? stats.totalNotionalVolume.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}
+            </span>
+          </div>
+        </div>
+        
+        {/* Desktop Status Bar - Horizontal */}
+        <div className="hidden md:flex items-center space-x-8">
           <div className="text-xs font-mono">
             <span className="text-primary/70 uppercase tracking-wider">NODES:</span>
             <span className="ml-2 text-secondary">{stats.nodeCount}</span>

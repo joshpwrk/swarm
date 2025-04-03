@@ -245,8 +245,8 @@ export default function FilterPanel({
   };
 
   return (
-    <aside className="w-80 bg-black p-5 overflow-y-auto flex-shrink-0 border-r border-primary">
-      <div className="space-y-6">
+    <aside className="w-full md:w-80 bg-black p-4 md:p-5 overflow-y-auto flex-shrink-0 border-r border-primary">
+      <div className="space-y-5 md:space-y-6">
         <div>
           <h2 className="text-lg font-bold uppercase text-primary mb-3 tracking-widest">
             FILTER PARAMETERS
