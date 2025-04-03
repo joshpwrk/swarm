@@ -176,13 +176,10 @@ export default function FilterPanel({
     
     // Validate time range
     const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     
-    // Enforce maximum time based on selected range
-    const maxRange = isLastWeekActive ? oneWeek : oneDay;
-    if (toTimestamp - fromTimestamp > maxRange) {
-      const timeText = isLastWeekActive ? "7 days" : "24 hours";
-      alert(`Time range cannot exceed ${timeText} due to API constraints. Please adjust your selection.`);
+    // Enforce maximum time range of 1 week for all selections
+    if (toTimestamp - fromTimestamp > oneWeek) {
+      alert(`Time range cannot exceed 7 days due to API constraints. Please adjust your selection.`);
       return;
     }
     
@@ -442,7 +439,7 @@ export default function FilterPanel({
                 />
                 
                 <div className="text-xs text-primary/70 italic mt-2">
-                  Note: Maximum lookback period is 7 days due to API constraints
+                  Note: Maximum time range is 7 days due to API constraints
                 </div>
               </div>
             </div>
