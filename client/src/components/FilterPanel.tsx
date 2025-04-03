@@ -20,16 +20,16 @@ export default function FilterPanel({
   onFilterChange, 
   onVisualSettingsChange 
 }: FilterPanelProps) {
-  // Format date for datetime-local input
+  // Format date for datetime-local input with seconds granularity
   const formatDateForInput = (timestamp: number) => {
     const date = new Date(timestamp);
     return new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
       .toISOString()
-      .slice(0, 16);
+      .slice(0, 19); // Include seconds (HH:MM:SS)
   };
 
   useEffect(() => {
-    // Initialize date inputs when component mounts
+    // Update date inputs when filters change or component mounts
     const fromDate = formatDateForInput(filters.fromTimestamp);
     const toDate = formatDateForInput(filters.toTimestamp);
     
@@ -38,24 +38,41 @@ export default function FilterPanel({
     const toEl = document.getElementById('toTimestamp') as HTMLInputElement;
     if (fromEl) fromEl.value = fromDate;
     if (toEl) toEl.value = toDate;
-  }, []);
+  }, [filters.fromTimestamp, filters.toTimestamp]);
 
   const handleApplyFilters = () => {
     // Get the values from the form inputs for dates
     const fromEl = document.getElementById('fromTimestamp') as HTMLInputElement;
     const toEl = document.getElementById('toTimestamp') as HTMLInputElement;
     
+    if (!fromEl?.value || !toEl?.value) {
+      // If dates are not provided, alert the user
+      alert('Please select both FROM and TO dates');
+      return;
+    }
+    
+    const fromTimestamp = new Date(fromEl.value).getTime();
+    const toTimestamp = new Date(toEl.value).getTime();
+    
+    // Enforce 24-hour maximum time range
+    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    if (toTimestamp - fromTimestamp > oneDay) {
+      alert('Time range cannot exceed 24 hours. Please adjust your selection.');
+      return;
+    }
+    
+    // Ensure from date is before to date
+    if (fromTimestamp >= toTimestamp) {
+      alert('FROM date must be earlier than TO date');
+      return;
+    }
+    
     const newFilters: Partial<Filters> = {
       page: 1, // Reset to first page when applying new filters
+      fromTimestamp,
+      toTimestamp,
+      pageSize: 500 // Ensure pageSize is always 500
     };
-    
-    if (fromEl && fromEl.value) {
-      newFilters.fromTimestamp = new Date(fromEl.value).getTime();
-    }
-    
-    if (toEl && toEl.value) {
-      newFilters.toTimestamp = new Date(toEl.value).getTime();
-    }
     
     onFilterChange(newFilters);
   };
@@ -127,6 +144,7 @@ export default function FilterPanel({
                   <Input 
                     type="datetime-local" 
                     id="fromTimestamp" 
+                    step="1" // Add seconds granularity
                     className="w-full bg-black border border-primary text-foreground"
                   />
                 </div>
@@ -135,28 +153,33 @@ export default function FilterPanel({
                   <Input 
                     type="datetime-local" 
                     id="toTimestamp" 
+                    step="1" // Add seconds granularity
                     className="w-full bg-black border border-primary text-foreground"
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Page Size */}
-            <div>
-              <Label className="block text-xs uppercase tracking-wider text-foreground mb-1">RESULTS PER PAGE</Label>
-              <Select 
-                value={filters.pageSize.toString()} 
-                onValueChange={(value) => onFilterChange({ pageSize: parseInt(value) })}
-              >
-                <SelectTrigger className="w-full bg-black border border-primary text-foreground">
-                  <SelectValue placeholder="Select page size" />
-                </SelectTrigger>
-                <SelectContent className="bg-black border border-primary text-foreground">
-                  <SelectItem value="50" className="text-secondary">50</SelectItem>
-                  <SelectItem value="100" className="text-secondary">100</SelectItem>
-                  <SelectItem value="200" className="text-secondary">200</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex justify-between w-full mt-1">
+                <span className="text-xs text-primary/70 italic">24hr max range</span>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-xs h-6 px-2 py-0 bg-black border-primary text-primary"
+                  onClick={() => {
+                    // Set to last 24 hours
+                    const toDate = new Date();
+                    const fromDate = new Date(toDate.getTime() - 24 * 60 * 60 * 1000);
+                    
+                    const fromEl = document.getElementById('fromTimestamp') as HTMLInputElement;
+                    const toEl = document.getElementById('toTimestamp') as HTMLInputElement;
+                    
+                    if (fromEl) fromEl.value = formatDateForInput(fromDate.getTime());
+                    if (toEl) toEl.value = formatDateForInput(toDate.getTime());
+                  }}
+                >
+                  RESET TO LAST 24HR
+                </Button>
+              </div>
             </div>
 
             {/* Apply Button */}

@@ -10,9 +10,9 @@ export default function Home() {
     currency: "ETH",
     instrumentType: "perp",
     instrumentName: "ETH-PERP",
-    fromTimestamp: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
+    fromTimestamp: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
     toTimestamp: Date.now(),
-    pageSize: 100,
+    pageSize: 500, // Hardcoded to 500 results per page
     page: 1,
     txStatus: "settled"
   });
