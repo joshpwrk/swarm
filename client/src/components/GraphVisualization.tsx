@@ -199,8 +199,7 @@ export default function GraphVisualization({
       .data(graph.links)
       .enter()
       .append("line")
-      .attr("stroke", "#4B5563")
-      .attr("stroke-opacity", 0.6)
+      .attr("class", "link")
       .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount)));
     
     // Draw nodes
@@ -210,13 +209,12 @@ export default function GraphVisualization({
       .enter()
       .append("circle")
       .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10))
+      .attr("class", d => `node ${d.type}`)
       .attr("fill", d => {
-        if (d.type === 'buyer') return "#10B981"; // Green for buyers
-        if (d.type === 'seller') return "#EF4444"; // Red for sellers
-        return "#F59E0B"; // Yellow for mixed
+        if (d.type === 'buyer') return "hsl(142, 76%, 45%)"; // Green for buyers
+        if (d.type === 'seller') return "hsl(0, 85%, 60%)"; // Red for sellers
+        return "hsl(196, 100%, 50%)"; // Blue for mixed
       })
-      .attr("stroke", "#E5E7EB")
-      .attr("stroke-width", 1)
       .call(d3.drag<SVGCircleElement, GraphNode>()
         .on("start", dragStarted)
         .on("drag", dragged)
@@ -305,9 +303,10 @@ export default function GraphVisualization({
     
     const newLinks = links.enter()
       .append("line")
-      .attr("stroke", "#4B5563")
-      .attr("stroke-opacity", 0.6)
-      .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount)));
+      .attr("stroke", "hsl(220, 100%, 40%)")
+      .attr("stroke-opacity", 0.5)
+      .attr("stroke-width", d => Math.max(1, Math.sqrt(d.amount)))
+      .attr("stroke-linecap", "round");
     
     // Update nodes
     const nodes = nodesGroup
@@ -319,9 +318,9 @@ export default function GraphVisualization({
     const newNodes = nodes.enter()
       .append("circle")
       .attr("fill", d => {
-        if (d.type === 'buyer') return "#10B981";
-        if (d.type === 'seller') return "#EF4444";
-        return "#F59E0B";
+        if (d.type === 'buyer') return "hsl(142, 76%, 45%)"; // Green for buyers
+        if (d.type === 'seller') return "hsl(0, 85%, 60%)"; // Red for sellers
+        return "hsl(196, 100%, 50%)"; // Blue for mixed
       })
       .attr("stroke", "#E5E7EB")
       .attr("stroke-width", 1)
@@ -434,36 +433,40 @@ export default function GraphVisualization({
       <div className="flex-1 relative" id="graph-container">
         {/* Loading Overlay */}
         {loading && (
-          <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center z-10">
+          <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center z-10">
             <Loader2 className="w-16 h-16 text-primary animate-spin" />
-            <p className="mt-4 text-lg">Loading trade data...</p>
+            <p className="mt-4 text-md uppercase tracking-widest text-primary">REQUESTING TRADE DATA...</p>
           </div>
         )}
 
         {/* Empty State */}
         {empty && !loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <svg className="w-20 h-20 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <p className="mt-4 text-lg text-gray-400">No trade data available</p>
-            <Button onClick={() => onFilterChange({ page: 1 })} className="mt-4 bg-primary">
-              Try Again
-            </Button>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
+            <div className="border border-primary/70 p-8 bg-black flex flex-col items-center">
+              <svg className="w-20 h-20 text-primary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <p className="mt-6 text-md uppercase tracking-widest text-primary">NO TRADE DATA AVAILABLE</p>
+              <Button onClick={() => onFilterChange({ page: 1 })} className="mt-6 bg-primary hover:bg-primary/90 uppercase tracking-widest font-bold">
+                RETRY QUERY
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Error State */}
         {error && !loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <svg className="w-20 h-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <p className="mt-4 text-lg text-red-400">Failed to load trade data</p>
-            <p className="mt-2 text-sm text-gray-400">{error}</p>
-            <Button onClick={() => onFilterChange({ page: 1 })} className="mt-4 bg-primary">
-              Retry
-            </Button>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
+            <div className="border border-red-500/70 p-8 bg-black flex flex-col items-center">
+              <svg className="w-20 h-20 text-red-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p className="mt-6 text-md uppercase tracking-widest text-red-500">SYSTEM ERROR</p>
+              <p className="mt-2 text-xs text-red-200 font-mono">{error}</p>
+              <Button onClick={() => onFilterChange({ page: 1 })} className="mt-6 bg-red-500 hover:bg-red-600 uppercase tracking-widest font-bold">
+                SYSTEM RESET
+              </Button>
+            </div>
           </div>
         )}
 
@@ -474,58 +477,58 @@ export default function GraphVisualization({
         <div 
           ref={tooltipRef} 
           id="node-tooltip" 
-          className="absolute hidden bg-surface border border-gray-700 p-3 rounded-md shadow-lg text-sm z-20 max-w-xs"
+          className="absolute hidden bg-black border border-primary p-4 shadow-xl text-xs z-20 max-w-xs font-mono"
         >
-          <div className="font-medium text-primary mb-1" id="tooltip-wallet">Wallet Address</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            <div className="text-gray-400">Trade Amount:</div>
-            <div id="tooltip-amount">0.0000</div>
-            <div className="text-gray-400">Trade Count:</div>
-            <div id="tooltip-count">0</div>
-            <div className="text-gray-400">Buy/Sell Ratio:</div>
-            <div id="tooltip-ratio">0:0</div>
+          <div className="font-bold text-primary mb-2 uppercase tracking-widest" id="tooltip-wallet">Wallet Address</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div className="text-primary/70 uppercase tracking-wider">VOLUME:</div>
+            <div id="tooltip-amount" className="text-secondary">0.0000</div>
+            <div className="text-primary/70 uppercase tracking-wider">TRADES:</div>
+            <div id="tooltip-count" className="text-secondary">0</div>
+            <div className="text-primary/70 uppercase tracking-wider">B/S RATIO:</div>
+            <div id="tooltip-ratio" className="text-secondary">0:0</div>
           </div>
         </div>
       </div>
 
       {/* Status Bar */}
-      <div className="bg-surface border-t border-gray-700 px-6 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-6">
-          <div className="text-sm">
-            <span className="text-gray-400">Nodes:</span>
-            <span className="ml-1">{stats.nodeCount}</span>
+      <div className="bg-black border-t border-primary px-6 py-3 flex justify-between items-center">
+        <div className="flex items-center space-x-8">
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">NODES:</span>
+            <span className="ml-2 text-secondary">{stats.nodeCount}</span>
           </div>
-          <div className="text-sm">
-            <span className="text-gray-400">Edges:</span>
-            <span className="ml-1">{stats.edgeCount}</span>
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">EDGES:</span>
+            <span className="ml-2 text-secondary">{stats.edgeCount}</span>
           </div>
-          <div className="text-sm">
-            <span className="text-gray-400">Total Volume:</span>
-            <span className="ml-1">
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">VOLUME:</span>
+            <span className="ml-2 text-secondary">
               {stats.totalVolume.toFixed(4)} {filters.currency}
             </span>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           {/* Pagination */}
           <Button 
             onClick={handlePrevPage}
             disabled={filters.page <= 1 || loading}
             variant="outline" 
-            className="px-3 py-1 bg-surfaceLight rounded-md text-sm h-8"
+            className="px-3 py-1 bg-black border-primary text-xs uppercase tracking-wider h-8 font-mono hover:bg-primary/10"
           >
-            Previous
+            PREV
           </Button>
-          <span className="text-sm">
-            Page {filters.page} of {tradeData?.pagination?.num_pages || 1}
+          <span className="text-xs font-mono">
+            PAGE {filters.page}/{tradeData?.pagination?.num_pages || 1}
           </span>
           <Button 
             onClick={handleNextPage}
             disabled={!tradeData || filters.page >= (tradeData.pagination?.num_pages || 1) || loading}
             variant="outline"
-            className="px-3 py-1 bg-surfaceLight rounded-md text-sm h-8"
+            className="px-3 py-1 bg-black border-primary text-xs uppercase tracking-wider h-8 font-mono hover:bg-primary/10"
           >
-            Next
+            NEXT
           </Button>
         </div>
       </div>

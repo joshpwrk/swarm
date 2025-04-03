@@ -33,14 +33,14 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background text-gray-100">
+    <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="bg-surface py-4 px-6 shadow-md">
+      <header className="bg-black py-4 px-6 border-b border-primary">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Lyra Finance Trade Visualization</h1>
+          <h1 className="text-xl font-bold tracking-wider uppercase text-primary">LYRA FINANCE // TRADE ANALYSIS</h1>
           <div className="flex items-center space-x-4">
-            <span id="connectionStatus" className="text-sm bg-surfaceLight px-3 py-1 rounded-full">
-              Connected
+            <span id="connectionStatus" className="text-xs bg-black px-3 py-1 border border-primary text-primary uppercase">
+              SYSTEM ACTIVE
             </span>
           </div>
         </div>
