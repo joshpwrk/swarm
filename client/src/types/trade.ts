@@ -54,6 +54,7 @@ export interface TradeData {
 export interface WalletNode {
   id: string;
   totalAmount: number;
+  totalNotionalVolume: number; // Add totalNotionalVolume (trade_amount * index_price)
   tradeCount: number;
   buyCount: number;
   sellCount: number;
@@ -65,9 +66,9 @@ export interface GraphNode extends WalletNode {
   type: 'buyer' | 'seller' | 'mixed';
   fx?: number | null;
   fy?: number | null;
-  size?: number; // Added for compatibility with existing code using d.size
+  size?: number; // Now using totalNotionalVolume instead of totalAmount
   normalizedSize?: number; // Value between 0-1 representing relative size to largest node
-  maxAmount?: number; // Reference to the largest totalAmount in the dataset
+  maxAmount?: number; // Reference to the largest notional volume in the dataset
 }
 
 export interface GraphLink {

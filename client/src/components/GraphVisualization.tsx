@@ -30,7 +30,8 @@ export default function GraphVisualization({
   const [stats, setStats] = useState({
     nodeCount: 0,
     edgeCount: 0,
-    totalVolume: 0
+    totalVolume: 0,
+    totalNotionalVolume: 0
   });
   
   const svgRef = useRef<SVGSVGElement>(null);
@@ -88,6 +89,7 @@ export default function GraphVisualization({
         walletMap.set(trade.wallet, {
           id: trade.wallet,
           totalAmount: 0,
+          totalNotionalVolume: 0, // Add new property for notional volume
           tradeCount: 0,
           buyCount: 0,
           sellCount: 0,
@@ -99,7 +101,14 @@ export default function GraphVisualization({
       
       const wallet = walletMap.get(trade.wallet)!;
       wallet.tradeCount++;
-      wallet.totalAmount += parseFloat(trade.trade_amount);
+      
+      // Calculate the notional value (trade_amount * index_price)
+      const tradeAmount = parseFloat(trade.trade_amount);
+      const indexPrice = parseFloat(trade.index_price);
+      
+      // Update both metrics
+      wallet.totalAmount += tradeAmount;
+      wallet.totalNotionalVolume += tradeAmount * indexPrice;
       
       if (trade.direction === 'buy') {
         wallet.buyCount++;
@@ -127,26 +136,27 @@ export default function GraphVisualization({
       }
     });
     
-    // Find the wallet with the highest total amount for scaling
-    let maxTotalAmount = 0;
+    // Find the wallet with the highest notional volume for scaling
+    let maxNotionalVolume = 0;
     walletMap.forEach(wallet => {
-      if (wallet.totalAmount > maxTotalAmount) {
-        maxTotalAmount = wallet.totalAmount;
+      if (wallet.totalNotionalVolume > maxNotionalVolume) {
+        maxNotionalVolume = wallet.totalNotionalVolume;
       }
     });
     
-    // Convert Maps to arrays for D3, scaling sizes relative to max amount
+    // Convert Maps to arrays for D3, scaling sizes relative to max notional volume
     const nodes = Array.from(walletMap.values()).map(wallet => {
-      // Calculate normalized size - with minimum to ensure visibility of smaller nodes
-      const normalizedSize = maxTotalAmount > 0 
-        ? (wallet.totalAmount / maxTotalAmount) 
+      // Calculate normalized size based on notional volume (trade_amount * index_price)
+      const normalizedSize = maxNotionalVolume > 0 
+        ? (wallet.totalNotionalVolume / maxNotionalVolume) 
         : 1;
         
       return {
         id: wallet.id,
         totalAmount: wallet.totalAmount,
-        maxAmount: maxTotalAmount, // Store for reference
-        size: wallet.totalAmount, // Keep original size for backwards compatibility
+        totalNotionalVolume: wallet.totalNotionalVolume,
+        maxAmount: maxNotionalVolume, // Store for reference
+        size: wallet.totalNotionalVolume, // Update size to use notional volume
         normalizedSize: normalizedSize, // Add normalized size for scaling (0-1)
         tradeCount: wallet.tradeCount,
         buyCount: wallet.buyCount,
@@ -170,12 +180,14 @@ export default function GraphVisualization({
     setGraph({ nodes, links });
     
     // Calculate stats
-    const totalVolume = nodes.reduce((sum, node) => sum + node.totalAmount, 0) / 2; // Divide by 2 as each trade is counted twice
+    const totalTokenVolume = nodes.reduce((sum, node) => sum + node.totalAmount, 0) / 2; // Divide by 2 as each trade is counted twice
+    const totalNotionalVolume = nodes.reduce((sum, node) => sum + node.totalNotionalVolume, 0) / 2; // Divide by 2 as each trade is counted twice
     
     setStats({
       nodeCount: nodes.length,
       edgeCount: links.length,
-      totalVolume
+      totalVolume: totalTokenVolume,
+      totalNotionalVolume: totalNotionalVolume
     });
   };
 
@@ -433,7 +445,7 @@ export default function GraphVisualization({
     const ratioEl = tooltip.querySelector("#tooltip-ratio");
     
     if (walletEl) walletEl.textContent = shortenAddress(d.id);
-    if (amountEl) amountEl.textContent = d.totalAmount.toFixed(4);
+    if (amountEl) amountEl.textContent = `${d.totalNotionalVolume.toFixed(2)} (${d.totalAmount.toFixed(4)} tokens)`;
     if (countEl) countEl.textContent = d.tradeCount.toString();
     
     // Calculate buy percentage for the ratio display
@@ -599,9 +611,15 @@ export default function GraphVisualization({
             <span className="ml-2 text-secondary">{stats.edgeCount}</span>
           </div>
           <div className="text-xs font-mono">
-            <span className="text-primary/70 uppercase tracking-wider">VOLUME:</span>
+            <span className="text-primary/70 uppercase tracking-wider">TOKEN VOLUME:</span>
             <span className="ml-2 text-secondary">
               {stats.totalVolume.toFixed(4)} {filters.currency}
+            </span>
+          </div>
+          <div className="text-xs font-mono">
+            <span className="text-primary/70 uppercase tracking-wider">NOTIONAL VOLUME:</span>
+            <span className="ml-2 text-secondary">
+              ${stats.totalNotionalVolume ? stats.totalNotionalVolume.toFixed(2) : 0}
             </span>
           </div>
         </div>
