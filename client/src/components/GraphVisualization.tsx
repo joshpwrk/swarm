@@ -452,48 +452,30 @@ export default function GraphVisualization({
     simulationRef.current.alpha(1).restart();
   };
 
+  // Track mouse position globally
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (tooltipRef.current && tooltipRef.current.style.display === 'block') {
+        tooltipRef.current.style.left = `${e.clientX + 20}px`;
+        tooltipRef.current.style.top = `${e.clientY - 20}px`;
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+  
   // Tooltip functions
   const showTooltip = (event: MouseEvent, d: GraphNode) => {
     if (!visualSettings.showTooltips || !tooltipRef.current) return;
     
     const tooltip = tooltipRef.current;
+    
+    // Make tooltip visible and set initial position
     tooltip.style.display = 'block';
-    
-    // First, place tooltip to calculate its size
-    tooltip.style.left = '0px';
-    tooltip.style.top = '0px';
-    
-    // Get tooltip dimensions
-    const tooltipRect = tooltip.getBoundingClientRect();
-    const tooltipWidth = tooltipRect.width;
-    const tooltipHeight = tooltipRect.height;
-    
-    // Get window dimensions
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // Calculate optimal position to ensure tooltip doesn't go off-screen
-    let xPos = event.pageX + 15; // Default: 15px to the right of cursor
-    let yPos = event.pageY - 15; // Default: 15px above cursor point
-    
-    // Adjust if too close to right edge of window
-    if (xPos + tooltipWidth > windowWidth - 10) {
-      xPos = event.pageX - tooltipWidth - 10; // Place to the left of cursor
-    }
-    
-    // Adjust if too close to bottom edge of window
-    if (yPos + tooltipHeight > windowHeight - 10) {
-      yPos = windowHeight - tooltipHeight - 10; // Place higher up
-    }
-    
-    // Adjust if too close to top edge of window
-    if (yPos < 10) {
-      yPos = 10; // Keep at least 10px from top edge
-    }
-    
-    // Set final position
-    tooltip.style.left = `${xPos}px`;
-    tooltip.style.top = `${yPos}px`;
+    tooltip.style.position = 'fixed';
+    tooltip.style.left = `${event.clientX + 20}px`;
+    tooltip.style.top = `${event.clientY - 20}px`;
     
     // Update tooltip content
     const walletEl = tooltip.querySelector("#tooltip-wallet");
@@ -661,7 +643,7 @@ export default function GraphVisualization({
         <div 
           ref={tooltipRef} 
           id="node-tooltip" 
-          className="absolute hidden bg-black border border-primary p-3 shadow-xl text-xs z-20 max-w-xs font-mono"
+          className="fixed hidden bg-black border border-primary p-3 shadow-xl text-xs z-50 max-w-xs font-mono"
           style={{ pointerEvents: 'none' }} // Ensure tooltip doesn't interfere with mouse events
         >
           <div className="font-bold text-primary mb-1 uppercase tracking-widest text-xs" id="tooltip-wallet">Wallet Address</div>
