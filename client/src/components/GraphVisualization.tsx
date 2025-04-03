@@ -23,6 +23,8 @@ export default function GraphVisualization({
   const [error, setError] = useState<string | null>(null);
   const [empty, setEmpty] = useState(false);
   const [tradeData, setTradeData] = useState<TradeData | null>(null);
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [graph, setGraph] = useState<{ nodes: GraphNode[], links: GraphLink[] }>({
     nodes: [],
     links: []
@@ -36,6 +38,7 @@ export default function GraphVisualization({
   
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const infoPanelRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
   const svgGroupRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
 
@@ -243,6 +246,11 @@ export default function GraphVisualization({
     
     const svg = d3.select(svgRef.current);
     
+    // Clear selected node state when clicking on background
+    svg.on("click", () => {
+      clearNodeSelection();
+    });
+    
     // Add zoom functionality
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 4])
@@ -312,7 +320,11 @@ export default function GraphVisualization({
         .on("drag", dragged)
         .on("end", dragEnded))
       .on("mouseover", showTooltip)
-      .on("mouseout", hideTooltip);
+      .on("mouseout", hideTooltip)
+      .on("click", (event, d) => {
+        event.stopPropagation(); // Prevent click event from propagating to background
+        handleNodeClick(event, d);
+      });
     
     // Add labels if enabled
     let labels: d3.Selection<SVGTextElement, GraphNode, SVGGElement, unknown> | null = null;
@@ -448,7 +460,11 @@ export default function GraphVisualization({
           d.fy = null;
         }))
       .on("mouseover", showTooltip)
-      .on("mouseout", hideTooltip);
+      .on("mouseout", hideTooltip)
+      .on("click", (event, d) => {
+        event.stopPropagation(); // Prevent click event from propagating to background
+        handleNodeClick(event, d);
+      });
     
     // Update all nodes (radius and color)
     nodes.merge(newNodes)
@@ -524,8 +540,108 @@ export default function GraphVisualization({
   }, [isMobile]);
   
   // Tooltip functions
+  // Function to copy wallet address to clipboard
+  const copyWalletToClipboard = (walletAddress: string) => {
+    navigator.clipboard.writeText(walletAddress)
+      .then(() => {
+        // Show a brief "copied" indicator (could be enhanced with a toast notification)
+        console.log('Wallet address copied to clipboard');
+      })
+      .catch(err => {
+        console.error('Failed to copy wallet address: ', err);
+      });
+  };
+
+  // Handle node selection
+  const handleNodeClick = (event: MouseEvent, node: GraphNode) => {
+    event.stopPropagation(); // Prevent event bubbling
+    
+    // If the same node is clicked again, do nothing (maintain selection)
+    if (selectedNodeId === node.id) return;
+    
+    // Update selected node state
+    setSelectedNode(node);
+    setSelectedNodeId(node.id);
+    
+    // Update node visualization to highlight selected node
+    if (svgGroupRef.current) {
+      // Reset all nodes to normal color
+      svgGroupRef.current.selectAll<SVGCircleElement, GraphNode>("circle.node")
+        .attr("stroke", "#E5E7EB")
+        .attr("stroke-width", 1);
+      
+      // Highlight the selected node
+      svgGroupRef.current.selectAll<SVGCircleElement, GraphNode>("circle.node")
+        .filter(d => d.id === node.id)
+        .attr("stroke", "#FFFFFF")
+        .attr("stroke-width", 3);
+    }
+    
+    // Hide the hover tooltip when a node is selected
+    if (tooltipRef.current) {
+      tooltipRef.current.style.display = 'none';
+    }
+    
+    // Update info panel content
+    updateInfoPanelContent(node);
+  };
+  
+  // Clear node selection
+  const clearNodeSelection = () => {
+    setSelectedNode(null);
+    setSelectedNodeId(null);
+    
+    // Reset all node styles
+    if (svgGroupRef.current) {
+      svgGroupRef.current.selectAll<SVGCircleElement, GraphNode>("circle.node")
+        .attr("stroke", "#E5E7EB")
+        .attr("stroke-width", 1);
+    }
+    
+    // Hide the info panel
+    if (infoPanelRef.current) {
+      infoPanelRef.current.style.display = 'none';
+    }
+  };
+  
+  // Update info panel content
+  const updateInfoPanelContent = (node: GraphNode) => {
+    if (!infoPanelRef.current) return;
+    
+    const panel = infoPanelRef.current;
+    
+    // Update panel content with node data
+    const walletEl = panel.querySelector("#info-wallet");
+    const amountEl = panel.querySelector("#info-amount");
+    const countEl = panel.querySelector("#info-count");
+    const ratioEl = panel.querySelector("#info-ratio");
+    const subaccountEl = panel.querySelector("#info-subaccounts");
+    
+    // Show full wallet address
+    if (walletEl) walletEl.textContent = node.id;
+    
+    // Calculate buy percentage for the ratio display
+    const buyPercentage = node.tradeCount > 0 ? Math.round((node.buyCount / node.tradeCount) * 100) : 0;
+    
+    if (amountEl) amountEl.textContent = `$${node.totalNotionalVolume.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${node.totalAmount.toFixed(4)} tokens)`;
+    if (countEl) countEl.textContent = node.tradeCount.toString();
+    if (ratioEl) ratioEl.textContent = `${node.buyCount}:${node.sellCount} (${buyPercentage}% buy)`;
+    
+    // Add subaccount IDs list
+    if (subaccountEl) {
+      subaccountEl.textContent = node.subaccountIds.length > 0 
+        ? node.subaccountIds.join(', ') 
+        : '0';
+    }
+    
+    // Show the panel
+    panel.style.display = 'block';
+  };
+
+  // Hover tooltip display
   const showTooltip = (event: MouseEvent, d: GraphNode) => {
-    if (!visualSettings.showTooltips || !tooltipRef.current) return;
+    // Don't show tooltip if a node is already selected
+    if (selectedNodeId || !visualSettings.showTooltips || !tooltipRef.current) return;
     
     const tooltip = tooltipRef.current;
     
@@ -567,8 +683,10 @@ export default function GraphVisualization({
     }
   };
 
+  // Hide hover tooltip
   const hideTooltip = () => {
-    if (!visualSettings.showTooltips || !tooltipRef.current) return;
+    // Don't hide tooltip if we have a selected node
+    if (selectedNodeId || !visualSettings.showTooltips || !tooltipRef.current) return;
     tooltipRef.current.style.display = 'none';
   };
 
@@ -636,6 +754,49 @@ export default function GraphVisualization({
       <div className="flex-1 relative" id="graph-container">
         {/* Color Legend Box - only show when data is loaded and visible */}
         {!loading && !empty && !error && <ColorLegend />}
+        
+        {/* Fixed Info Panel - only visible when a node is selected */}
+        <div 
+          ref={infoPanelRef}
+          id="node-info-panel"
+          className="hidden fixed top-0 left-0 right-0 bg-black border-b border-primary p-3 md:p-4 shadow-xl z-50 font-mono"
+        >
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center">
+                <div className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm" id="info-wallet">Wallet Address</div>
+                <button 
+                  onClick={() => selectedNode && copyWalletToClipboard(selectedNode.id)}
+                  className="ml-2 p-1 text-primary hover:bg-primary/20 rounded"
+                  title="Copy wallet address"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto,1fr] gap-x-3 md:gap-x-6 gap-y-1 mt-2">
+                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">VOLUME:</div>
+                <div id="info-amount" className="text-secondary text-[10px] md:text-xs">0.0000</div>
+                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">TRADES:</div>
+                <div id="info-count" className="text-secondary text-[10px] md:text-xs">0</div>
+                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">B/S RATIO:</div>
+                <div id="info-ratio" className="text-secondary text-[10px] md:text-xs">0:0</div>
+                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">SUBACCOUNTS:</div>
+                <div id="info-subaccounts" className="text-secondary text-[10px] md:text-xs">0</div>
+              </div>
+            </div>
+            <button 
+              onClick={clearNodeSelection}
+              className="text-primary hover:bg-primary/20 p-1 rounded"
+              title="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
         
         {/* Loading Overlay */}
         {loading && (
