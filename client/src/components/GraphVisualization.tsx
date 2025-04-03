@@ -253,16 +253,27 @@ export default function GraphVisualization({
     const linksGroup = g.append("g").attr("class", "links");
     const nodesGroup = g.append("g").attr("class", "nodes");
     
-    // Create simulation
+    // Adjust scale factor for viewport size (smaller for mobile)
+    const isSmallViewport = width < 768;
+    const scaleFactor = isSmallViewport ? 0.6 : 1.0;
+    
+    // Adjust parameters for mobile
+    const linkDistance = isSmallViewport ? 60 : 100;
+    const chargeStrength = isSmallViewport 
+      ? -visualSettings.forceStrength * 5 // Less repulsion on mobile
+      : -visualSettings.forceStrength * 10;
+    
+    // Create simulation with viewport-adjusted parameters
     simulationRef.current = d3.forceSimulation<GraphNode>(graph.nodes)
       .force("link", d3.forceLink<GraphNode, GraphLink>(graph.links)
         .id(d => d.id)
-        .distance(100))
-      .force("charge", d3.forceManyBody().strength(-visualSettings.forceStrength * 10))
+        .distance(linkDistance))
+      .force("charge", d3.forceManyBody().strength(chargeStrength))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collide", d3.forceCollide<GraphNode>().radius(d => {
         // Match the collision radius to the visual radius + a small buffer
-        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        // Scale down sizes for mobile
+        const maxSize = (isSmallViewport ? 30 : 50) * (visualSettings.nodeSizeScale / 10) * scaleFactor;
         return Math.max(3, d.normalizedSize! * maxSize) + 5;
       }).iterations(2));
     
@@ -282,9 +293,9 @@ export default function GraphVisualization({
       .enter()
       .append("circle")
       .attr("r", d => {
-        // Use a fixed maximum size (50 * scale factor) for the largest node
+        // Use viewport-aware maximum size for the largest node
         // Minimum size of 3 for visibility of small nodes
-        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        const maxSize = (isSmallViewport ? 30 : 50) * (visualSettings.nodeSizeScale / 10) * scaleFactor;
         return Math.max(3, d.normalizedSize! * maxSize);
       })
       .attr("class", "node")
@@ -306,11 +317,12 @@ export default function GraphVisualization({
         .enter()
         .append("text")
         .text(d => shortenAddress(d.id))
-        .attr("font-size", "8px")
+        .attr("font-size", isSmallViewport ? "6px" : "8px")
         .attr("text-anchor", "middle")
         .attr("dy", d => {
-          const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
-          return Math.max(3, d.normalizedSize! * maxSize) + 12;
+          // Use viewport-aware sizing for label positioning
+          const maxSize = (isSmallViewport ? 30 : 50) * (visualSettings.nodeSizeScale / 10) * scaleFactor;
+          return Math.max(3, d.normalizedSize! * maxSize) + (isSmallViewport ? 8 : 12);
         })
         .attr("fill", "#E5E7EB");
     }
@@ -360,15 +372,26 @@ export default function GraphVisualization({
     const width = svgRef.current?.clientWidth || 800;
     const height = svgRef.current?.clientHeight || 600;
     
+    // Adjust scale factor for viewport size (smaller for mobile)
+    const isSmallViewport = width < 768;
+    const scaleFactor = isSmallViewport ? 0.6 : 1.0;
+    
+    // Adjust parameters for mobile
+    const linkDistance = isSmallViewport ? 60 : 100;
+    const chargeStrength = isSmallViewport 
+      ? -visualSettings.forceStrength * 5 // Less repulsion on mobile
+      : -visualSettings.forceStrength * 10;
+    
     // Update simulation forces
     simulationRef.current
       .nodes(graph.nodes)
-      .force("link", d3.forceLink<GraphNode, GraphLink>(graph.links).id(d => d.id).distance(100))
-      .force("charge", d3.forceManyBody().strength(-visualSettings.forceStrength * 10))
+      .force("link", d3.forceLink<GraphNode, GraphLink>(graph.links).id(d => d.id).distance(linkDistance))
+      .force("charge", d3.forceManyBody().strength(chargeStrength))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collide", d3.forceCollide<GraphNode>().radius(d => {
         // Match the collision radius to the visual radius + a small buffer
-        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        // Scale down sizes for mobile
+        const maxSize = (isSmallViewport ? 30 : 50) * (visualSettings.nodeSizeScale / 10) * scaleFactor;
         return Math.max(3, d.normalizedSize! * maxSize) + 5;
       }).iterations(2));
     
@@ -423,8 +446,8 @@ export default function GraphVisualization({
     // Update all nodes (radius and color)
     nodes.merge(newNodes)
       .attr("r", d => {
-        // Use same fixed maximum size as in initialization
-        const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
+        // Use same viewport-aware sizing as in initialization
+        const maxSize = (isSmallViewport ? 30 : 50) * (visualSettings.nodeSizeScale / 10) * scaleFactor;
         return Math.max(3, d.normalizedSize! * maxSize);
       })
       .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount));
@@ -439,11 +462,12 @@ export default function GraphVisualization({
         .enter()
         .append("text")
         .text(d => shortenAddress(d.id))
-        .attr("font-size", "8px")
+        .attr("font-size", isSmallViewport ? "6px" : "8px")
         .attr("text-anchor", "middle")
         .attr("dy", d => {
-          const maxSize = 50 * (visualSettings.nodeSizeScale / 10);
-          return Math.max(3, d.normalizedSize! * maxSize) + 12;
+          // Use viewport-aware sizing for label positioning
+          const maxSize = (isSmallViewport ? 30 : 50) * (visualSettings.nodeSizeScale / 10) * scaleFactor;
+          return Math.max(3, d.normalizedSize! * maxSize) + (isSmallViewport ? 8 : 12);
         })
         .attr("fill", "#E5E7EB");
     }
