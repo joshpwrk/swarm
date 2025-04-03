@@ -65,6 +65,7 @@ export interface GraphNode extends WalletNode {
   y?: number;
   fx?: number | null;
   fy?: number | null;
+  size?: number; // Added for compatibility with existing code using d.size
 }
 
 export interface GraphLink {

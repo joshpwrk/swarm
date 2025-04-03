@@ -104,8 +104,8 @@ export default function GraphVisualization({
       if (!tradeLinks.has(trade.trade_id)) {
         tradeLinks.set(trade.trade_id, {
           id: trade.trade_id,
-          source: null,
-          target: null,
+          source: undefined,
+          target: undefined,
           amount: parseFloat(trade.trade_amount),
           price: parseFloat(trade.trade_price),
           timestamp: trade.timestamp
@@ -123,12 +123,13 @@ export default function GraphVisualization({
     // Convert Maps to arrays for D3
     const nodes = Array.from(walletMap.values()).map(wallet => ({
       id: wallet.id,
-      size: wallet.totalAmount,
+      totalAmount: wallet.totalAmount,
+      size: wallet.totalAmount, // Add size property for backwards compatibility
       tradeCount: wallet.tradeCount,
       buyCount: wallet.buyCount,
       sellCount: wallet.sellCount,
       type: wallet.buyCount > wallet.sellCount ? 'buyer' : wallet.sellCount > wallet.buyCount ? 'seller' : 'mixed'
-    }));
+    } as GraphNode));
     
     // Filter out incomplete links (without source or target)
     const links = Array.from(tradeLinks.values())
@@ -145,7 +146,7 @@ export default function GraphVisualization({
     setGraph({ nodes, links });
     
     // Calculate stats
-    const totalVolume = nodes.reduce((sum, node) => sum + node.size, 0) / 2; // Divide by 2 as each trade is counted twice
+    const totalVolume = nodes.reduce((sum, node) => sum + node.totalAmount, 0) / 2; // Divide by 2 as each trade is counted twice
     
     setStats({
       nodeCount: nodes.length,
@@ -386,7 +387,7 @@ export default function GraphVisualization({
     const ratioEl = tooltip.querySelector("#tooltip-ratio");
     
     if (walletEl) walletEl.textContent = shortenAddress(d.id);
-    if (amountEl) amountEl.textContent = d.size.toFixed(4);
+    if (amountEl) amountEl.textContent = d.totalAmount.toFixed(4);
     if (countEl) countEl.textContent = d.tradeCount.toString();
     
     // Calculate buy percentage for the ratio display
