@@ -617,15 +617,15 @@ export default function GraphVisualization({
     const ratioEl = panel.querySelector("#info-ratio");
     const subaccountEl = panel.querySelector("#info-subaccounts");
     
-    // Update wallet address in the hyperlink
+    // Update wallet address text
     if (walletEl) {
       walletEl.textContent = node.id;
-      
-      // Also update the href attribute of the parent <a> element if it exists
-      const walletLink = walletEl.closest('a');
-      if (walletLink) {
-        walletLink.setAttribute('href', `https://www.derive.xyz/user/${node.id}`);
-      }
+    }
+    
+    // Update the GO TO ACCOUNT button href
+    const accountLink = panel.querySelector("a[href^='https://www.derive.xyz/user/']");
+    if (accountLink) {
+      accountLink.setAttribute('href', `https://www.derive.xyz/user/${node.id}`);
     }
     
     // Calculate buy percentage for the ratio display
@@ -769,48 +769,57 @@ export default function GraphVisualization({
           id="node-info-panel"
           className="hidden fixed top-0 left-0 right-0 bg-black border-b border-primary p-3 md:p-4 shadow-xl z-50 font-mono"
         >
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center">
-                <a 
-                  href={selectedNode ? `https://www.derive.xyz/user/${selectedNode.id}` : '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm hover:underline"
-                  id="info-wallet"
-                >
-                  Wallet Address
-                </a>
-                <button 
-                  onClick={() => selectedNode && copyWalletToClipboard(selectedNode.id)}
-                  className="ml-2 p-1 text-primary hover:bg-primary/20 rounded"
-                  title="Copy wallet address"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </button>
+          <div className="flex flex-col">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center">
+                  <div className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm" id="info-wallet-label">
+                    DERIVE WALLET
+                  </div>
+                  <button 
+                    onClick={() => selectedNode && copyWalletToClipboard(selectedNode.id)}
+                    className="ml-2 p-1 text-primary hover:bg-primary/20 rounded"
+                    title="Copy wallet address"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="text-secondary text-[10px] md:text-xs mt-1 mb-2 font-mono" id="info-wallet"></div>
+                <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto,1fr] gap-x-3 md:gap-x-6 gap-y-1 mt-2">
+                  <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">VOLUME:</div>
+                  <div id="info-amount" className="text-secondary text-[10px] md:text-xs">0.0000</div>
+                  <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">TRADES:</div>
+                  <div id="info-count" className="text-secondary text-[10px] md:text-xs">0</div>
+                  <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">B/S RATIO:</div>
+                  <div id="info-ratio" className="text-secondary text-[10px] md:text-xs">0:0</div>
+                  <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">SUBACCOUNTS:</div>
+                  <div id="info-subaccounts" className="text-secondary text-[10px] md:text-xs">0</div>
+                </div>
               </div>
-              <div className="grid grid-cols-[auto,1fr] md:grid-cols-[auto,1fr,auto,1fr] gap-x-3 md:gap-x-6 gap-y-1 mt-2">
-                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">VOLUME:</div>
-                <div id="info-amount" className="text-secondary text-[10px] md:text-xs">0.0000</div>
-                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">TRADES:</div>
-                <div id="info-count" className="text-secondary text-[10px] md:text-xs">0</div>
-                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">B/S RATIO:</div>
-                <div id="info-ratio" className="text-secondary text-[10px] md:text-xs">0:0</div>
-                <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">SUBACCOUNTS:</div>
-                <div id="info-subaccounts" className="text-secondary text-[10px] md:text-xs">0</div>
-              </div>
+              <button 
+                onClick={clearNodeSelection}
+                className="text-primary hover:bg-primary/20 p-1 rounded"
+                title="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button 
-              onClick={clearNodeSelection}
-              className="text-primary hover:bg-primary/20 p-1 rounded"
-              title="Close"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            
+            {/* Go to Account Button */}
+            <div className="mt-3 pt-2 border-t border-primary/30">
+              <a 
+                href={selectedNode ? `https://www.derive.xyz/user/${selectedNode.id}` : '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-4 py-1.5 rounded text-xs uppercase tracking-wider font-bold transition-colors"
+              >
+                GO TO ACCOUNT
+              </a>
+            </div>
           </div>
         </div>
         
