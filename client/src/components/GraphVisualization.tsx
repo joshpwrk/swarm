@@ -811,14 +811,19 @@ export default function GraphVisualization({
             
             {/* Go to Account Button */}
             <div className="mt-3 pt-2 border-t border-primary/30">
-              <a 
-                href={selectedNode ? `https://www.derive.xyz/user/${selectedNode.id}` : '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-4 py-1.5 rounded text-xs uppercase tracking-wider font-bold transition-colors"
-              >
-                GO TO ACCOUNT
-              </a>
+              <div className="flex flex-col md:flex-row md:items-center">
+                <a 
+                  href={selectedNode ? `https://www.derive.xyz/user/${selectedNode.id}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-4 py-1.5 text-xs uppercase tracking-wider font-bold transition-colors"
+                >
+                  GO TO ACCOUNT
+                </a>
+                <div className="text-[9px] md:text-[10px] text-primary/60 mt-1 md:mt-0 md:ml-3 italic font-sans">
+                  NOTE: does not work for EOAs. Use derive-cockpit.replit.app via subaccount_ids instead
+                </div>
+              </div>
             </div>
           </div>
         </div>
