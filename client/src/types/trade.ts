@@ -59,6 +59,7 @@ export interface WalletNode {
   tradeCount: number;
   buyCount: number;
   sellCount: number;
+  subaccountIds: number[]; // Array of all subaccount IDs associated with this wallet
   x?: number;
   y?: number;
 }

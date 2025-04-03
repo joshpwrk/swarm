@@ -93,6 +93,7 @@ export default function GraphVisualization({
           tradeCount: 0,
           buyCount: 0,
           sellCount: 0,
+          subaccountIds: [], // Initialize empty array for subaccount IDs
           // Add initial random position for better spread on refresh
           x: Math.random() * width,
           y: Math.random() * height
@@ -109,6 +110,11 @@ export default function GraphVisualization({
       // Update both metrics
       wallet.totalAmount += tradeAmount;
       wallet.totalNotionalVolume += tradeAmount * indexPrice;
+      
+      // Add subaccount_id to the list if it's not already included
+      if (!wallet.subaccountIds.includes(trade.subaccount_id)) {
+        wallet.subaccountIds.push(trade.subaccount_id);
+      }
       
       if (trade.direction === 'buy') {
         wallet.buyCount++;
@@ -161,6 +167,7 @@ export default function GraphVisualization({
         tradeCount: wallet.tradeCount,
         buyCount: wallet.buyCount,
         sellCount: wallet.sellCount,
+        subaccountIds: wallet.subaccountIds, // Include the subaccount IDs
         type: wallet.buyCount > wallet.sellCount ? 'buyer' : wallet.sellCount > wallet.buyCount ? 'seller' : 'mixed'
       } as GraphNode;
     });
@@ -540,14 +547,24 @@ export default function GraphVisualization({
     const amountEl = tooltip.querySelector("#tooltip-amount");
     const countEl = tooltip.querySelector("#tooltip-count");
     const ratioEl = tooltip.querySelector("#tooltip-ratio");
+    const subaccountEl = tooltip.querySelector("#tooltip-subaccounts");
     
-    if (walletEl) walletEl.textContent = shortenAddress(d.id);
+    // Show full wallet address
+    if (walletEl) walletEl.textContent = d.id;
+    
     if (amountEl) amountEl.textContent = `$${d.totalNotionalVolume.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${d.totalAmount.toFixed(4)} tokens)`;
     if (countEl) countEl.textContent = d.tradeCount.toString();
     
     // Calculate buy percentage for the ratio display
     const buyPercentage = d.tradeCount > 0 ? Math.round((d.buyCount / d.tradeCount) * 100) : 0;
     if (ratioEl) ratioEl.textContent = `${d.buyCount}:${d.sellCount} (${buyPercentage}% buy)`;
+    
+    // Add subaccount IDs list
+    if (subaccountEl) {
+      subaccountEl.textContent = d.subaccountIds.length > 0 
+        ? d.subaccountIds.join(', ') 
+        : '0';
+    }
   };
 
   const hideTooltip = () => {
@@ -701,7 +718,7 @@ export default function GraphVisualization({
         <div 
           ref={tooltipRef} 
           id="node-tooltip" 
-          className="fixed hidden bg-black border border-primary p-2 md:p-3 shadow-xl text-xs z-50 max-w-[280px] md:max-w-xs font-mono"
+          className="fixed hidden bg-black border border-primary p-2 md:p-3 shadow-xl text-xs z-50 max-w-[320px] md:max-w-md font-mono"
           style={{ pointerEvents: 'none' }} // Ensure tooltip doesn't interfere with mouse events
         >
           <div className="font-bold text-primary mb-1 uppercase tracking-widest text-[10px] md:text-xs" id="tooltip-wallet">Wallet Address</div>
@@ -712,6 +729,8 @@ export default function GraphVisualization({
             <div id="tooltip-count" className="text-secondary text-[10px] md:text-xs">0</div>
             <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">B/S RATIO:</div>
             <div id="tooltip-ratio" className="text-secondary text-[10px] md:text-xs">0:0</div>
+            <div className="text-primary/70 uppercase tracking-wider text-[10px] md:text-xs">SUBACCOUNTS:</div>
+            <div id="tooltip-subaccounts" className="text-secondary text-[10px] md:text-xs">0</div>
           </div>
         </div>
       </div>
