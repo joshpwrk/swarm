@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Filters, VisualSettings, TradeData, GraphNode, GraphLink, WalletNode } from "@/types/trade";
 import { fetchTradeHistory, FetchProgress } from "@/lib/api";
-import { Loader2, Clock, Copy, Check } from "lucide-react";
+import { Loader2, Clock } from "lucide-react";
 import { ColorLegend } from "@/components/ColorLegend";
-import { useToast } from "@/hooks/use-toast";
 
 interface GraphVisualizationProps {
   filters: Filters;
@@ -19,7 +18,6 @@ export default function GraphVisualization({
   visualSettings, 
   onFilterChange 
 }: GraphVisualizationProps) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState<FetchProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +33,6 @@ export default function GraphVisualization({
     totalVolume: 0,
     totalNotionalVolume: 0
   });
-  
-  // Variables to help distinguish between clicks and drags
-  const isDraggingRef = useRef(false);
-  const dragDistanceRef = useRef(0);
-  const dragStartPosRef = useRef({ x: 0, y: 0 });
   
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -360,65 +353,20 @@ export default function GraphVisualization({
       }
     });
     
-    // Function to copy node wallet address to clipboard
-    const copyWalletToClipboard = async (address: string) => {
-      try {
-        await navigator.clipboard.writeText(address);
-        toast({
-          title: "Address Copied",
-          description: "Wallet address copied to clipboard",
-          duration: 2000
-        });
-      } catch (err) {
-        toast({
-          title: "Copy Failed",
-          description: "Could not copy to clipboard. Try again later.",
-          variant: "destructive",
-          duration: 2000
-        });
-      }
-    }
-
-    // Drag functions with click detection
+    // Drag functions
     function dragStarted(event: d3.D3DragEvent<SVGCircleElement, GraphNode, GraphNode>, d: GraphNode) {
       if (!event.active && simulationRef.current) simulationRef.current.alphaTarget(0.3).restart();
-      
-      // Set the initial position and drag state
-      isDraggingRef.current = false;
-      dragDistanceRef.current = 0;
-      dragStartPosRef.current = { x: event.x, y: event.y };
-      
       d.fx = d.x;
       d.fy = d.y;
     }
     
     function dragged(event: d3.D3DragEvent<SVGCircleElement, GraphNode, GraphNode>, d: GraphNode) {
-      // Calculate drag distance to distinguish between click and drag
-      const dx = event.x - dragStartPosRef.current.x;
-      const dy = event.y - dragStartPosRef.current.y;
-      dragDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
-      
-      // If we've moved more than a small threshold, consider it a drag
-      if (dragDistanceRef.current > 3) {
-        isDraggingRef.current = true;
-      }
-      
       d.fx = event.x;
       d.fy = event.y;
     }
     
     function dragEnded(event: d3.D3DragEvent<SVGCircleElement, GraphNode, GraphNode>, d: GraphNode) {
       if (!event.active && simulationRef.current) simulationRef.current.alphaTarget(0);
-      
-      // If it was a click (not a drag), copy the wallet address
-      if (!isDraggingRef.current && dragDistanceRef.current < 3) {
-        copyWalletToClipboard(d.id);
-      }
-      
-      // Reset the drag state
-      isDraggingRef.current = false;
-      dragDistanceRef.current = 0;
-      
       d.fx = null;
       d.fy = null;
     }
@@ -487,41 +435,15 @@ export default function GraphVisualization({
       .call(d3.drag<SVGCircleElement, GraphNode>()
         .on("start", function(event, d) {
           if (!event.active && simulationRef.current) simulationRef.current.alphaTarget(0.3).restart();
-          
-          // Set the initial position and drag state
-          isDraggingRef.current = false;
-          dragDistanceRef.current = 0;
-          dragStartPosRef.current = { x: event.x, y: event.y };
-          
           d.fx = d.x;
           d.fy = d.y;
         })
         .on("drag", function(event, d) {
-          // Calculate drag distance to distinguish between click and drag
-          const dx = event.x - dragStartPosRef.current.x;
-          const dy = event.y - dragStartPosRef.current.y;
-          dragDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
-          
-          // If we've moved more than a small threshold, consider it a drag
-          if (dragDistanceRef.current > 3) {
-            isDraggingRef.current = true;
-          }
-          
           d.fx = event.x;
           d.fy = event.y;
         })
         .on("end", function(event, d) {
           if (!event.active && simulationRef.current) simulationRef.current.alphaTarget(0);
-          
-          // If it was a click (not a drag), copy the wallet address
-          if (!isDraggingRef.current && dragDistanceRef.current < 3) {
-            copyWalletToClipboard(d.id);
-          }
-          
-          // Reset the drag state
-          isDraggingRef.current = false;
-          dragDistanceRef.current = 0;
-          
           d.fx = null;
           d.fy = null;
         }))
