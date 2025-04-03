@@ -35,8 +35,13 @@ export async function fetchTradeHistory(
     });
 
     if (!initialResponse.ok) {
-      const errorData = await initialResponse.json().catch(() => null);
-      throw new Error(errorData?.message || `API returned ${initialResponse.status}: ${initialResponse.statusText}`);
+      try {
+        const errorData = await initialResponse.json();
+        throw new Error(errorData?.message || `API returned ${initialResponse.status}: ${initialResponse.statusText}`);
+      } catch (parseError) {
+        // If the error response couldn't be parsed as JSON
+        throw new Error(`API error (${initialResponse.status}): ${initialResponse.statusText}`);
+      }
     }
 
     const initialData: TradeData = await initialResponse.json();
@@ -81,9 +86,14 @@ export async function fetchTradeHistory(
                 page: batchPage // Use specific page number for each batch request
               }
             })
-          }).then(response => {
+          }).then(async response => {
             if (!response.ok) {
-              throw new Error(`Failed to fetch page ${batchPage}`);
+              try {
+                const errorData = await response.json();
+                throw new Error(errorData?.message || `Failed to fetch page ${batchPage}: ${response.statusText}`);
+              } catch (parseError) {
+                throw new Error(`API error on page ${batchPage} (${response.status}): ${response.statusText}`);
+              }
             }
             return response.json();
           }).then((data: TradeData) => {

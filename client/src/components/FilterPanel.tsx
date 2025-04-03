@@ -182,10 +182,23 @@ export default function FilterPanel({
               <Select
                 value={filters.currency}
                 onValueChange={(value) => {
-                  // Reset instrument type when currency changes
+                  // Find the available instrument types for this currency
+                  if (currencies) {
+                    const selectedCurrency = currencies.find(c => c.currency === value);
+                    if (selectedCurrency && selectedCurrency.instrument_types.length > 0) {
+                      // Set both currency and a valid instrument type in one update
+                      onFilterChange({
+                        currency: value,
+                        instrumentType: selectedCurrency.instrument_types[0]
+                      });
+                      return;
+                    }
+                  }
+                  
+                  // Fallback if currency info not available yet
                   onFilterChange({
                     currency: value,
-                    instrumentType: "",
+                    instrumentType: "perp", // Default to perp as a safe value
                   });
                 }}
               >

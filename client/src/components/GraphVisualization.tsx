@@ -588,15 +588,34 @@ export default function GraphVisualization({
         {/* Error State */}
         {error && !loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
-            <div className="border border-red-500/70 p-8 bg-black flex flex-col items-center">
+            <div className="border border-red-500/70 p-8 bg-black flex flex-col items-center max-w-lg">
               <svg className="w-20 h-20 text-red-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <p className="mt-6 text-md uppercase tracking-widest text-red-500">SYSTEM ERROR</p>
-              <p className="mt-2 text-xs text-red-200 font-mono">{error}</p>
-              <Button onClick={() => onFilterChange({})} className="mt-6 bg-red-500 hover:bg-red-600 uppercase tracking-widest font-bold">
-                SYSTEM RESET
-              </Button>
+              <p className="mt-6 text-md uppercase tracking-widest text-red-500">DATA RETRIEVAL ERROR</p>
+              <p className="mt-2 text-xs text-red-200 font-mono text-center">{error}</p>
+              
+              {/* Additional help text */}
+              <p className="mt-4 text-xs text-gray-400 italic text-center">
+                If you changed the currency, you may need to select a valid instrument type.
+              </p>
+              
+              <div className="flex space-x-4 mt-6">
+                <Button 
+                  onClick={() => onFilterChange({})} 
+                  className="bg-red-500 hover:bg-red-600 uppercase tracking-widest font-bold"
+                >
+                  SYSTEM RESET
+                </Button>
+                <Button 
+                  onClick={() => onFilterChange({
+                    instrumentType: filters.instrumentType || "perp" // Ensure we have a valid instrument type
+                  })} 
+                  className="bg-primary hover:bg-primary/90 uppercase tracking-widest font-bold"
+                >
+                  EXECUTE QUERY
+                </Button>
+              </div>
             </div>
           </div>
         )}
