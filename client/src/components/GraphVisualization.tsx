@@ -460,7 +460,24 @@ export default function GraphVisualization({
   return (
     <>
       <div className="flex-1 relative" id="graph-container">
-        {/* Removed top-right legend per user request */}
+        {/* Color Legend Box - only show when data is loaded and visible */}
+        {!loading && !empty && !error && (
+          <div className="absolute top-4 right-4 bg-black/80 border border-primary p-3 z-10 text-xs font-mono">
+            <div className="text-primary mb-2 uppercase tracking-widest text-xs font-bold">Buy/Sell Ratio</div>
+            <div className="w-48 h-3 rounded-sm overflow-hidden border border-primary/30 relative">
+              <div 
+                className="w-full h-full" 
+                style={{ 
+                  background: 'linear-gradient(to right, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(142, 100%, 45%))'
+                }}
+              ></div>
+            </div>
+            <div className="flex justify-between w-full mt-1 text-2xs">
+              <span className="text-primary/70 uppercase tracking-wider">SELL</span>
+              <span className="text-primary/70 uppercase tracking-wider">BUY</span>
+            </div>
+          </div>
+        )}
         
         {/* Loading Overlay */}
         {loading && (
@@ -556,24 +573,6 @@ export default function GraphVisualization({
             </span>
           </div>
         </div>
-        
-        {/* Color spectrum legend */}
-        {!loading && !empty && !error && (
-          <div className="flex flex-col items-center">
-            <div className="w-48 h-3 rounded-sm overflow-hidden border border-primary/30 relative">
-              <div 
-                className="w-full h-full" 
-                style={{ 
-                  background: 'linear-gradient(to right, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(142, 100%, 45%))'
-                }}
-              ></div>
-            </div>
-            <div className="flex justify-between w-full mt-1 text-2xs font-mono">
-              <span className="text-primary/70 uppercase tracking-wider">SELL</span>
-              <span className="text-primary/70 uppercase tracking-wider">BUY</span>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
