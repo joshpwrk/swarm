@@ -1,8 +1,6 @@
 import { useState } from "react";
 import FilterPanel from "@/components/FilterPanel";
 import GraphVisualization from "@/components/GraphVisualization";
-import Legend from "@/components/Legend";
-import ZoomControls from "@/components/ZoomControls";
 import { Filters, VisualSettings } from "@/types/trade";
 
 export default function Home() {
@@ -14,22 +12,22 @@ export default function Home() {
     toTimestamp: Date.now(),
     pageSize: 500, // Hardcoded to 500 results per page
     page: 1, // Page is kept for API compatibility but not used for pagination UI
-    txStatus: "settled"
+    txStatus: "settled",
   });
 
   const [visualSettings, setVisualSettings] = useState<VisualSettings>({
     nodeSizeScale: 10,
     forceStrength: 30,
     showLabels: true,
-    showTooltips: true
+    showTooltips: true,
   });
 
   const handleFilterChange = (newFilters: Partial<Filters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
   const handleVisualSettingsChange = (newSettings: Partial<VisualSettings>) => {
-    setVisualSettings(prev => ({ ...prev, ...newSettings }));
+    setVisualSettings((prev) => ({ ...prev, ...newSettings }));
   };
 
   return (
@@ -37,9 +35,14 @@ export default function Home() {
       {/* Header */}
       <header className="bg-black py-4 px-6 border-b border-primary">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold tracking-wider uppercase text-primary">LYRA FINANCE // TRADE ANALYSIS</h1>
+          <h1 className="text-xl font-bold tracking-wider uppercase text-primary">
+            LYRA FINANCE // TRADE ANALYSIS
+          </h1>
           <div className="flex items-center space-x-4">
-            <span id="connectionStatus" className="text-xs bg-black px-3 py-1 border border-primary text-primary uppercase">
+            <span
+              id="connectionStatus"
+              className="text-xs bg-black px-3 py-1 border border-primary text-primary uppercase"
+            >
               SYSTEM ACTIVE
             </span>
           </div>
@@ -49,8 +52,8 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Controls */}
-        <FilterPanel 
-          filters={filters} 
+        <FilterPanel
+          filters={filters}
           visualSettings={visualSettings}
           onFilterChange={handleFilterChange}
           onVisualSettingsChange={handleVisualSettingsChange}
@@ -58,17 +61,11 @@ export default function Home() {
 
         {/* Main Graph Area */}
         <main className="flex-1 overflow-hidden flex flex-col relative">
-          <GraphVisualization 
-            filters={filters} 
+          <GraphVisualization
+            filters={filters}
             visualSettings={visualSettings}
             onFilterChange={handleFilterChange}
           />
-          
-          {/* Legend */}
-          <Legend />
-          
-          {/* Zoom Controls */}
-          <ZoomControls />
         </main>
       </div>
     </div>

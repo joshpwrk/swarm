@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Filters, VisualSettings } from "@/types/trade";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { getQueryFn, queryClient } from "@/lib/queryClient";
 
 interface FilterPanelProps {
   filters: Filters;
@@ -14,12 +16,40 @@ interface FilterPanelProps {
   onVisualSettingsChange: (settings: Partial<VisualSettings>) => void;
 }
 
+// Define API response interface
+interface CurrencyInfo {
+  currency: string;
+  instrument_types: string[];
+  protocol_asset_addresses: {
+    perp: string | null;
+    option: string | null;
+    spot: string | null;
+    underlying_erc20: string | null;
+  };
+  managers: {
+    address: string;
+    margin_type: string;
+  }[];
+  spot_price: string;
+  spot_price_24h: string;
+}
+
 export default function FilterPanel({ 
   filters, 
   visualSettings, 
   onFilterChange, 
   onVisualSettingsChange 
 }: FilterPanelProps) {
+  // State for available options from API
+  const [instrumentTypes, setInstrumentTypes] = useState<string[]>([]);
+  const [instrumentNames, setInstrumentNames] = useState<string[]>([]);
+
+  // Fetch currencies from API
+  const { data: currencies, isLoading: isLoadingCurrencies } = useQuery({
+    queryKey: ['/api/currencies'],
+    queryFn: getQueryFn<CurrencyInfo[]>({ on401: 'throw' }),
+  });
+
   // Format date for datetime-local input with seconds granularity
   const formatDateForInput = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -28,8 +58,52 @@ export default function FilterPanel({
       .slice(0, 19); // Include seconds (HH:MM:SS)
   };
 
+  // Update instrument types based on the selected currency
   useEffect(() => {
-    // Update date inputs when filters change or component mounts
+    if (currencies && currencies.length > 0) {
+      // If a currency is selected, find its available instrument types
+      if (filters.currency) {
+        const selectedCurrency = currencies.find(c => c.currency === filters.currency);
+        if (selectedCurrency) {
+          setInstrumentTypes(selectedCurrency.instrument_types);
+        }
+      }
+    }
+  }, [currencies, filters.currency]);
+  
+  // When instrument type changes, generate potential instrument names
+  useEffect(() => {
+    if (filters.currency && filters.instrumentType) {
+      // Generate common instrument names based on the selected currency and instrument type
+      // For example: ETH + PERP = ETH-PERP
+      if (filters.instrumentType === 'perp') {
+        setInstrumentNames([`${filters.currency}-PERP`]);
+      } else if (filters.instrumentType === 'option') {
+        // Generate common option patterns (this is a simplified example)
+        const now = new Date();
+        const nextFriday = new Date(now);
+        nextFriday.setDate(now.getDate() + (5 - now.getDay()) % 7);
+        
+        const month = (nextFriday.getMonth() + 1).toString().padStart(2, '0');
+        const day = nextFriday.getDate().toString().padStart(2, '0');
+        const dateStr = `${month}${day}`;
+        
+        // Generate a few common strike prices
+        const baseNames = [
+          `${filters.currency}-${dateStr}-C-1000`,
+          `${filters.currency}-${dateStr}-P-1000`,
+        ];
+        setInstrumentNames(baseNames);
+      } else {
+        setInstrumentNames([]);
+      }
+    } else {
+      setInstrumentNames([]);
+    }
+  }, [filters.currency, filters.instrumentType]);
+
+  // Update date inputs when filters change or component mounts
+  useEffect(() => {
     const fromDate = formatDateForInput(filters.fromTimestamp);
     const toDate = formatDateForInput(filters.toTimestamp);
     
@@ -87,15 +161,34 @@ export default function FilterPanel({
               <Label className="block text-xs uppercase tracking-wider text-foreground mb-1">CURRENCY</Label>
               <Select 
                 value={filters.currency} 
-                onValueChange={(value) => onFilterChange({ currency: value })}
+                onValueChange={(value) => {
+                  // Reset instrument type and name when currency changes
+                  onFilterChange({ 
+                    currency: value,
+                    instrumentType: '',
+                    instrumentName: ''
+                  });
+                }}
               >
                 <SelectTrigger className="w-full bg-black border border-primary text-foreground">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent className="bg-black border border-primary text-foreground">
-                  <SelectItem value="ETH" className="text-secondary">ETH</SelectItem>
-                  <SelectItem value="BTC" className="text-secondary">BTC</SelectItem>
-                  <SelectItem value="USDC" className="text-secondary">USDC</SelectItem>
+                  {isLoadingCurrencies ? (
+                    <SelectItem value="loading" disabled className="text-secondary">Loading currencies...</SelectItem>
+                  ) : currencies && currencies.length > 0 ? (
+                    currencies.map(currency => (
+                      <SelectItem 
+                        key={currency.currency} 
+                        value={currency.currency} 
+                        className="text-secondary"
+                      >
+                        {currency.currency}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-data" disabled className="text-secondary">No currencies available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -105,14 +198,31 @@ export default function FilterPanel({
               <Label className="block text-xs uppercase tracking-wider text-foreground mb-1">CONTRACT TYPE</Label>
               <Select 
                 value={filters.instrumentType} 
-                onValueChange={(value) => onFilterChange({ instrumentType: value })}
+                onValueChange={(value) => onFilterChange({ 
+                  instrumentType: value,
+                  instrumentName: '' // Reset instrument name when type changes
+                })}
+                disabled={!filters.currency} // Disable until currency is selected
               >
                 <SelectTrigger className="w-full bg-black border border-primary text-foreground">
                   <SelectValue placeholder="Select contract type" />
                 </SelectTrigger>
                 <SelectContent className="bg-black border border-primary text-foreground">
-                  <SelectItem value="perp" className="text-secondary">PERPETUAL</SelectItem>
-                  <SelectItem value="option" className="text-secondary">OPTION</SelectItem>
+                  {!filters.currency ? (
+                    <SelectItem value="placeholder" disabled className="text-secondary">Select currency first</SelectItem>
+                  ) : instrumentTypes.length > 0 ? (
+                    instrumentTypes.map(type => (
+                      <SelectItem
+                        key={type}
+                        value={type}
+                        className="text-secondary"
+                      >
+                        {type.toUpperCase()}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="placeholder" disabled className="text-secondary">No contract types available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -123,13 +233,27 @@ export default function FilterPanel({
               <Select 
                 value={filters.instrumentName} 
                 onValueChange={(value) => onFilterChange({ instrumentName: value })}
+                disabled={!filters.instrumentType} // Disable until instrument type is selected
               >
                 <SelectTrigger className="w-full bg-black border border-primary text-foreground">
                   <SelectValue placeholder="Select instrument" />
                 </SelectTrigger>
                 <SelectContent className="bg-black border border-primary text-foreground">
-                  <SelectItem value="ETH-PERP" className="text-secondary">ETH-PERP</SelectItem>
-                  <SelectItem value="BTC-PERP" className="text-secondary">BTC-PERP</SelectItem>
+                  {!filters.instrumentType ? (
+                    <SelectItem value="placeholder" disabled className="text-secondary">Select contract type first</SelectItem>
+                  ) : instrumentNames.length > 0 ? (
+                    instrumentNames.map(name => (
+                      <SelectItem
+                        key={name}
+                        value={name}
+                        className="text-secondary"
+                      >
+                        {name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="placeholder" disabled className="text-secondary">No instruments available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
