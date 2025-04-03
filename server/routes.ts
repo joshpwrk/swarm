@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currency: filters.currency,
           from_timestamp: filters.fromTimestamp,
           to_timestamp: filters.toTimestamp,
-          instrument_name: filters.instrumentName,
+          instrument_name: null, // Always set to null as requested
           instrument_type: filters.instrumentType,
           page: filters.page,
           page_size: filters.pageSize,

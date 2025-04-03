@@ -7,7 +7,7 @@ export default function Home() {
   const [filters, setFilters] = useState<Filters>({
     currency: "ETH",
     instrumentType: "perp",
-    instrumentName: "ETH-PERP",
+    instrumentName: "", // Leave empty as instrument_name will be null in the API
     fromTimestamp: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
     toTimestamp: Date.now(),
     pageSize: 500, // Hardcoded to 500 results per page

@@ -162,11 +162,10 @@ export default function FilterPanel({
               <Select 
                 value={filters.currency} 
                 onValueChange={(value) => {
-                  // Reset instrument type and name when currency changes
+                  // Reset instrument type when currency changes
                   onFilterChange({ 
                     currency: value,
-                    instrumentType: '',
-                    instrumentName: ''
+                    instrumentType: ''
                   });
                 }}
               >
@@ -199,8 +198,7 @@ export default function FilterPanel({
               <Select 
                 value={filters.instrumentType} 
                 onValueChange={(value) => onFilterChange({ 
-                  instrumentType: value,
-                  instrumentName: '' // Reset instrument name when type changes
+                  instrumentType: value
                 })}
                 disabled={!filters.currency} // Disable until currency is selected
               >
@@ -227,36 +225,7 @@ export default function FilterPanel({
               </Select>
             </div>
 
-            {/* Instrument Name */}
-            <div>
-              <Label className="block text-xs uppercase tracking-wider text-foreground mb-1">INSTRUMENT</Label>
-              <Select 
-                value={filters.instrumentName} 
-                onValueChange={(value) => onFilterChange({ instrumentName: value })}
-                disabled={!filters.instrumentType} // Disable until instrument type is selected
-              >
-                <SelectTrigger className="w-full bg-black border border-primary text-foreground">
-                  <SelectValue placeholder="Select instrument" />
-                </SelectTrigger>
-                <SelectContent className="bg-black border border-primary text-foreground">
-                  {!filters.instrumentType ? (
-                    <SelectItem value="placeholder" disabled className="text-secondary">Select contract type first</SelectItem>
-                  ) : instrumentNames.length > 0 ? (
-                    instrumentNames.map(name => (
-                      <SelectItem
-                        key={name}
-                        value={name}
-                        className="text-secondary"
-                      >
-                        {name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="placeholder" disabled className="text-secondary">No instruments available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Instrument name section removed as requested */}
 
             {/* Time Range */}
             <div>
