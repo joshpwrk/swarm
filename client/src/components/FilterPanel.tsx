@@ -405,7 +405,7 @@ export default function FilterPanel({
                       size="sm"
                       id={`day-${days}`}
                       className="text-xs py-1 px-0 h-8 bg-black border-primary text-primary data-[state=active]:bg-primary data-[state=active]:text-white"
-                      data-state={days === 1 ? "active" : "inactive"}
+                      data-state={days === 3 ? "active" : "inactive"}
                       onClick={(e) => {
                         // Reset all buttons
                         for (let i = 1; i <= 7; i++) {
@@ -450,14 +450,14 @@ export default function FilterPanel({
                 {/* Visual indicator of selected lookback */}
                 <div className="flex justify-between items-center bg-black/30 p-2 border border-primary/30 rounded-sm">
                   <span className="text-xs text-foreground/70 uppercase">FROM:</span>
-                  <span id="lookbackDisplay" className="text-xs text-primary font-mono">1 day ago</span>
+                  <span id="lookbackDisplay" className="text-xs text-primary font-mono">3 days ago</span>
                 </div>
                 
                 {/* Hidden input to store fromTimestamp */}
                 <input 
                   type="hidden" 
                   id="hiddenFromTimestamp" 
-                  value={Date.now() - 24 * 60 * 60 * 1000} // Default to 1 day ago
+                  value={Date.now() - 3 * 24 * 60 * 60 * 1000} // Default to 3 days ago
                 />
                 
                 <div className="text-xs text-primary/70 italic mt-2">

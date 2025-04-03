@@ -8,7 +8,7 @@ export default function Home() {
     currency: "ETH",
     instrumentType: "option",
     instrumentName: "", // Leave empty as instrument_name will be null in the API
-    fromTimestamp: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
+    fromTimestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, // 3 days ago
     toTimestamp: Date.now(),
     pageSize: 500, // Hardcoded to 500 results per page
     page: 1, // Page is kept for API compatibility but not used for pagination UI
@@ -36,7 +36,7 @@ export default function Home() {
       <header className="bg-black py-4 px-6 border-b border-primary">
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold tracking-wider uppercase text-primary">
-            LYRA FINANCE // TRADE ANALYSIS
+            DERIVE // SWARM ANALYZER
           </h1>
           <div className="flex items-center space-x-4">
             <span
