@@ -406,18 +406,7 @@ export default function GraphVisualization({
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
-  // Handle pagination
-  const handlePrevPage = () => {
-    if (filters.page > 1) {
-      onFilterChange({ page: filters.page - 1 });
-    }
-  };
-
-  const handleNextPage = () => {
-    if (tradeData && tradeData.pagination && filters.page < tradeData.pagination.num_pages) {
-      onFilterChange({ page: filters.page + 1 });
-    }
-  };
+  // Pagination handlers removed as we now load all pages at once
   
   // Update window resize
   useEffect(() => {
@@ -472,7 +461,7 @@ export default function GraphVisualization({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
               <p className="mt-6 text-md uppercase tracking-widest text-primary">NO TRADE DATA AVAILABLE</p>
-              <Button onClick={() => onFilterChange({ page: 1 })} className="mt-6 bg-primary hover:bg-primary/90 uppercase tracking-widest font-bold">
+              <Button onClick={() => onFilterChange({})} className="mt-6 bg-primary hover:bg-primary/90 uppercase tracking-widest font-bold">
                 RETRY QUERY
               </Button>
             </div>
@@ -488,7 +477,7 @@ export default function GraphVisualization({
               </svg>
               <p className="mt-6 text-md uppercase tracking-widest text-red-500">SYSTEM ERROR</p>
               <p className="mt-2 text-xs text-red-200 font-mono">{error}</p>
-              <Button onClick={() => onFilterChange({ page: 1 })} className="mt-6 bg-red-500 hover:bg-red-600 uppercase tracking-widest font-bold">
+              <Button onClick={() => onFilterChange({})} className="mt-6 bg-red-500 hover:bg-red-600 uppercase tracking-widest font-bold">
                 SYSTEM RESET
               </Button>
             </div>
@@ -534,28 +523,7 @@ export default function GraphVisualization({
             </span>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          {/* Pagination */}
-          <Button 
-            onClick={handlePrevPage}
-            disabled={filters.page <= 1 || loading}
-            variant="outline" 
-            className="px-3 py-1 bg-black border-primary text-xs uppercase tracking-wider h-8 font-mono hover:bg-primary/10"
-          >
-            PREV
-          </Button>
-          <span className="text-xs font-mono">
-            PAGE {filters.page}/{tradeData?.pagination?.num_pages || 1}
-          </span>
-          <Button 
-            onClick={handleNextPage}
-            disabled={!tradeData || filters.page >= (tradeData.pagination?.num_pages || 1) || loading}
-            variant="outline"
-            className="px-3 py-1 bg-black border-primary text-xs uppercase tracking-wider h-8 font-mono hover:bg-primary/10"
-          >
-            NEXT
-          </Button>
-        </div>
+        {/* Right side intentionally left empty after removing pagination controls */}
       </div>
     </>
   );

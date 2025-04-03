@@ -13,7 +13,7 @@ export default function Home() {
     fromTimestamp: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
     toTimestamp: Date.now(),
     pageSize: 500, // Hardcoded to 500 results per page
-    page: 1,
+    page: 1, // Page is kept for API compatibility but not used for pagination UI
     txStatus: "settled"
   });
 

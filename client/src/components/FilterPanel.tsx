@@ -68,10 +68,9 @@ export default function FilterPanel({
     }
     
     const newFilters: Partial<Filters> = {
-      page: 1, // Reset to first page when applying new filters
       fromTimestamp,
       toTimestamp,
-      pageSize: 500 // Ensure pageSize is always 500
+      pageSize: 500 // Keep pageSize at 500 for API compatibility
     };
     
     onFilterChange(newFilters);

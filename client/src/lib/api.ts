@@ -29,7 +29,7 @@ export async function fetchTradeHistory(
       body: JSON.stringify({
         filters: {
           ...filters,
-          page: 1
+          page: 1 // Always start with page 1 regardless of filters.page
         }
       })
     });
@@ -78,7 +78,7 @@ export async function fetchTradeHistory(
             body: JSON.stringify({
               filters: {
                 ...filters,
-                page: batchPage
+                page: batchPage // Use specific page number for each batch request
               }
             })
           }).then(response => {
