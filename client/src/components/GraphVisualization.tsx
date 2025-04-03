@@ -484,7 +484,7 @@ export default function GraphVisualization({
     const ratioEl = tooltip.querySelector("#tooltip-ratio");
     
     if (walletEl) walletEl.textContent = shortenAddress(d.id);
-    if (amountEl) amountEl.textContent = `${d.totalNotionalVolume.toFixed(2)} (${d.totalAmount.toFixed(4)} tokens)`;
+    if (amountEl) amountEl.textContent = `$${d.totalNotionalVolume.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${d.totalAmount.toFixed(4)} tokens)`;
     if (countEl) countEl.textContent = d.tradeCount.toString();
     
     // Calculate buy percentage for the ratio display
@@ -678,7 +678,7 @@ export default function GraphVisualization({
           <div className="text-xs font-mono">
             <span className="text-primary/70 uppercase tracking-wider">NOTIONAL VOLUME:</span>
             <span className="ml-2 text-secondary">
-              ${stats.totalNotionalVolume ? stats.totalNotionalVolume.toFixed(2) : 0}
+              ${stats.totalNotionalVolume ? stats.totalNotionalVolume.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}
             </span>
           </div>
         </div>
