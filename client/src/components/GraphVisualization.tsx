@@ -219,11 +219,7 @@ export default function GraphVisualization({
       .append("circle")
       .attr("r", d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10))
       .attr("class", d => `node ${d.type}`)
-      .attr("fill", d => {
-        if (d.type === 'buyer') return "hsl(142, 76%, 45%)"; // Green for buyers
-        if (d.type === 'seller') return "hsl(0, 85%, 60%)"; // Red for sellers
-        return "hsl(196, 100%, 50%)"; // Blue for mixed
-      })
+      .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount))
       .call(d3.drag<SVGCircleElement, GraphNode>()
         .on("start", dragStarted)
         .on("drag", dragged)
@@ -326,11 +322,7 @@ export default function GraphVisualization({
     
     const newNodes = nodes.enter()
       .append("circle")
-      .attr("fill", d => {
-        if (d.type === 'buyer') return "hsl(142, 76%, 45%)"; // Green for buyers
-        if (d.type === 'seller') return "hsl(0, 85%, 60%)"; // Red for sellers
-        return "hsl(196, 100%, 50%)"; // Blue for mixed
-      })
+      .attr("fill", d => calculateNodeColor(d.buyCount, d.sellCount))
       .attr("stroke", "#E5E7EB")
       .attr("stroke-width", 1)
       .call(d3.drag<SVGCircleElement, GraphNode>()
@@ -393,7 +385,10 @@ export default function GraphVisualization({
     if (walletEl) walletEl.textContent = shortenAddress(d.id);
     if (amountEl) amountEl.textContent = d.size.toFixed(4);
     if (countEl) countEl.textContent = d.tradeCount.toString();
-    if (ratioEl) ratioEl.textContent = `${d.buyCount}:${d.sellCount}`;
+    
+    // Calculate buy percentage for the ratio display
+    const buyPercentage = d.tradeCount > 0 ? Math.round((d.buyCount / d.tradeCount) * 100) : 0;
+    if (ratioEl) ratioEl.textContent = `${d.buyCount}:${d.sellCount} (${buyPercentage}% buy)`;
   };
 
   const hideTooltip = () => {
@@ -404,6 +399,27 @@ export default function GraphVisualization({
   // Helper function to shorten wallet address
   const shortenAddress = (address: string) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+  
+  // Helper function to calculate color based on buy/sell ratio
+  const calculateNodeColor = (buyCount: number, sellCount: number) => {
+    // If no trades, return neutral color
+    if (buyCount === 0 && sellCount === 0) return "hsl(210, 10%, 70%)";
+    
+    // Calculate ratio - ranges from 0 (all sells) to 100 (all buys)
+    const total = buyCount + sellCount;
+    const buyRatio = Math.floor((buyCount / total) * 100);
+    
+    // Create a gradient from red (0, 85%, 60%) to green (142, 76%, 45%)
+    // Use linear interpolation between the two hues
+    const hue = Math.floor((buyRatio / 100) * (142 - 0) + 0);
+    
+    // Adjust saturation and lightness for more visual appeal
+    // Extreme values (near 0 or 100) get higher saturation
+    const saturation = 80 - Math.abs(buyRatio - 50) * 0.2;
+    const lightness = 50 - Math.abs(buyRatio - 50) * 0.1;
+    
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   };
 
   // Pagination handlers removed as we now load all pages at once
@@ -494,7 +510,7 @@ export default function GraphVisualization({
           className="absolute hidden bg-black border border-primary p-3 shadow-xl text-xs z-20 max-w-xs font-mono"
         >
           <div className="font-bold text-primary mb-1 uppercase tracking-widest text-xs" id="tooltip-wallet">Wallet Address</div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <div className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1">
             <div className="text-primary/70 uppercase tracking-wider">VOLUME:</div>
             <div id="tooltip-amount" className="text-secondary">0.0000</div>
             <div className="text-primary/70 uppercase tracking-wider">TRADES:</div>
