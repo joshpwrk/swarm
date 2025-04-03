@@ -88,3 +88,9 @@ svg text.node-label {
 }
 
 /* Node colors now dynamically calculated based on buy/sell ratio */
+
+/* Add extra small text size for legend labels */
+.text-2xs {
+  font-size: 0.65rem;
+  line-height: 1rem;
+}
