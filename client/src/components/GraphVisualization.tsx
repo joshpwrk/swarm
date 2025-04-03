@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Filters, VisualSettings, TradeData, GraphNode, GraphLink, WalletNode } from "@/types/trade";
-import { fetchTradeHistory } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { fetchTradeHistory, FetchProgress } from "@/lib/api";
+import { Loader2, Clock } from "lucide-react";
 
 interface GraphVisualizationProps {
   filters: Filters;
@@ -17,6 +18,7 @@ export default function GraphVisualization({
   onFilterChange 
 }: GraphVisualizationProps) {
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState<FetchProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [empty, setEmpty] = useState(false);
   const [tradeData, setTradeData] = useState<TradeData | null>(null);
@@ -41,9 +43,15 @@ export default function GraphVisualization({
       setLoading(true);
       setError(null);
       setEmpty(false);
+      setLoadingProgress(null);
       
       try {
-        const data = await fetchTradeHistory(filters);
+        // Track progress during fetching
+        const handleProgress = (progress: FetchProgress) => {
+          setLoadingProgress(progress);
+        };
+        
+        const data = await fetchTradeHistory(filters, handleProgress);
         setTradeData(data);
         
         if (!data.trades || data.trades.length === 0) {
@@ -55,6 +63,7 @@ export default function GraphVisualization({
         setError(err instanceof Error ? err.message : 'Failed to fetch trade data');
       } finally {
         setLoading(false);
+        setLoadingProgress(null);
       }
     };
     
@@ -434,8 +443,24 @@ export default function GraphVisualization({
         {/* Loading Overlay */}
         {loading && (
           <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center z-10">
-            <Loader2 className="w-16 h-16 text-primary animate-spin" />
-            <p className="mt-4 text-md uppercase tracking-widest text-primary">REQUESTING TRADE DATA...</p>
+            {!loadingProgress ? (
+              <Loader2 className="w-16 h-16 text-primary animate-spin" />
+            ) : (
+              <div className="flex flex-col items-center w-full max-w-md px-8">
+                <Clock className="w-14 h-14 text-primary mb-4" />
+                <Progress 
+                  value={loadingProgress.percentage} 
+                  className="h-2 w-full bg-gray-800"
+                />
+                <div className="flex justify-between w-full mt-2 text-xs text-primary/70">
+                  <span>Page {loadingProgress.currentPage} of {loadingProgress.totalPages}</span>
+                  <span>{Math.round(loadingProgress.percentage)}% complete</span>
+                </div>
+              </div>
+            )}
+            <p className="mt-6 text-md uppercase tracking-widest text-primary">
+              {!loadingProgress ? "REQUESTING TRADE DATA..." : "LOADING ALL PAGES..."}
+            </p>
           </div>
         )}
 
