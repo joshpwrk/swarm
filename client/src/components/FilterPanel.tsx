@@ -131,23 +131,64 @@ export default function FilterPanel({
       hiddenFromEl.value = filters.fromTimestamp.toString();
     }
     
-    // Set the correct active state for time range buttons
-    const oneDay = 24 * 60 * 60 * 1000;
-    const isLastDay = (filters.toTimestamp - filters.fromTimestamp) <= oneDay;
+    // Find which button should be active based on the time difference
+    const daysDiff = Math.round((filters.toTimestamp - filters.fromTimestamp) / (24 * 60 * 60 * 1000));
     
-    const last24hrBtn = document.getElementById("last24hr");
-    const lastWeekBtn = document.getElementById("lastWeek");
+    // Reset all buttons first
+    for (let i = 1; i <= 7; i++) {
+      document.getElementById(`day-${i}`)?.setAttribute('data-state', 'inactive');
+    }
     
-    if (last24hrBtn && lastWeekBtn) {
-      if (isLastDay) {
-        last24hrBtn.setAttribute("data-state", "active");
-        lastWeekBtn.setAttribute("data-state", "inactive");
-      } else {
-        last24hrBtn.setAttribute("data-state", "inactive");
-        lastWeekBtn.setAttribute("data-state", "active");
-      }
+    // Set the appropriate button active (capped at 7)
+    const activeDays = Math.min(Math.max(daysDiff, 1), 7);
+    document.getElementById(`day-${activeDays}`)?.setAttribute('data-state', 'active');
+    
+    // Update the lookback display
+    const lookbackDisplayEl = document.getElementById('lookbackDisplay');
+    if (lookbackDisplayEl) {
+      lookbackDisplayEl.textContent = `${activeDays} day${activeDays > 1 ? 's' : ''} ago`;
     }
   }, [filters.fromTimestamp, filters.toTimestamp]);
+  
+  // Add event listener to update from time when end time changes
+  useEffect(() => {
+    const toEl = document.getElementById("toTimestamp") as HTMLInputElement;
+    
+    const handleEndTimeChange = () => {
+      if (!toEl.value) return;
+      
+      // Get the current selected days from the active button
+      let selectedDays = 1; // Default to 1 day
+      for (let i = 1; i <= 7; i++) {
+        if (document.getElementById(`day-${i}`)?.getAttribute('data-state') === 'active') {
+          selectedDays = i;
+          break;
+        }
+      }
+      
+      // Calculate new from time based on selected end time and days
+      const endTime = new Date(toEl.value).getTime();
+      const fromTime = endTime - (selectedDays * 24 * 60 * 60 * 1000);
+      
+      // Update hidden from timestamp
+      const hiddenFromEl = document.getElementById('hiddenFromTimestamp') as HTMLInputElement;
+      if (hiddenFromEl) {
+        hiddenFromEl.value = fromTime.toString();
+      }
+    };
+    
+    // Add event listener
+    if (toEl) {
+      toEl.addEventListener('change', handleEndTimeChange);
+    }
+    
+    // Cleanup function
+    return () => {
+      if (toEl) {
+        toEl.removeEventListener('change', handleEndTimeChange);
+      }
+    };
+  }, []); // Empty dependency array so it only runs once on mount
 
   const handleApplyFilters = () => {
     // Get the end time from the input
@@ -170,9 +211,14 @@ export default function FilterPanel({
       fromTimestamp = parseInt(hiddenFromEl.value);
     }
 
-    // Check if the "lastWeek" button is active
-    const lastWeekBtn = document.getElementById("lastWeek");
-    const isLastWeekActive = lastWeekBtn?.getAttribute("data-state") === "active";
+    // Get the currently active days button (for logging purposes only)
+    let activeDays = 1;
+    for (let i = 1; i <= 7; i++) {
+      if (document.getElementById(`day-${i}`)?.getAttribute('data-state') === 'active') {
+        activeDays = i;
+        break;
+      }
+    }
     
     // Validate time range
     const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
@@ -343,99 +389,75 @@ export default function FilterPanel({
                 />
               </div>
               
-              {/* Time Range Toggle */}
+              {/* Time Range Selection */}
               <div className="bg-black/50 border border-primary/50 p-3 rounded-sm">
                 <Label className="block text-xs uppercase text-foreground/70 mb-2">
-                  LOOKBACK PERIOD
+                  LOOKBACK PERIOD (DAYS)
                 </Label>
                 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    id="last24hr"
-                    className="text-xs py-1 bg-black border-primary text-primary data-[state=active]:bg-primary data-[state=active]:text-white"
-                    data-state="active"
-                    onClick={(e) => {
-                      // Toggle active state for buttons
-                      document.getElementById('last24hr')?.setAttribute('data-state', 'active');
-                      document.getElementById('lastWeek')?.setAttribute('data-state', 'inactive');
-                      
-                      // Set to last 24 hours
-                      const toDate = new Date();
-                      const fromDate = new Date(
-                        toDate.getTime() - 24 * 60 * 60 * 1000, // 24 hours
-                      );
-
-                      // Update the hidden fromTimestamp value
-                      const toEl = document.getElementById(
-                        "toTimestamp",
-                      ) as HTMLInputElement;
-                      
-                      if (toEl) {
-                        // If no custom end time set, default to now
-                        if (!toEl.value) {
-                          toEl.value = formatDateForInput(toDate.getTime());
+                <div className="grid grid-cols-7 gap-1 mb-3">
+                  {/* Generate buttons for 1-7 days */}
+                  {[1, 2, 3, 4, 5, 6, 7].map((days) => (
+                    <Button
+                      key={days}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      id={`day-${days}`}
+                      className="text-xs py-1 px-0 h-8 bg-black border-primary text-primary data-[state=active]:bg-primary data-[state=active]:text-white"
+                      data-state={days === 1 ? "active" : "inactive"}
+                      onClick={(e) => {
+                        // Reset all buttons
+                        for (let i = 1; i <= 7; i++) {
+                          document.getElementById(`day-${i}`)?.setAttribute('data-state', 'inactive');
                         }
-                      }
-                      
-                      // Store the from timestamp in a hidden input
-                      const hiddenFromEl = document.getElementById('hiddenFromTimestamp') as HTMLInputElement;
-                      if (hiddenFromEl) {
-                        hiddenFromEl.value = fromDate.getTime().toString();
-                      }
-                    }}
-                  >
-                    LAST 24 HOURS
-                  </Button>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    id="lastWeek"
-                    className="text-xs py-1 bg-black border-primary text-primary data-[state=active]:bg-primary data-[state=active]:text-white"
-                    data-state="inactive"
-                    onClick={(e) => {
-                      // Toggle active state for buttons
-                      document.getElementById('last24hr')?.setAttribute('data-state', 'inactive');
-                      document.getElementById('lastWeek')?.setAttribute('data-state', 'active');
-                      
-                      // Set to last week
-                      const toDate = new Date();
-                      const fromDate = new Date(
-                        toDate.getTime() - 7 * 24 * 60 * 60 * 1000, // 7 days
-                      );
-                      
-                      // Update the to timestamp if not set
-                      const toEl = document.getElementById(
-                        "toTimestamp",
-                      ) as HTMLInputElement;
-                      
-                      if (toEl) {
-                        // If no custom end time set, default to now
-                        if (!toEl.value) {
-                          toEl.value = formatDateForInput(toDate.getTime());
+                        
+                        // Set current button active
+                        document.getElementById(`day-${days}`)?.setAttribute('data-state', 'active');
+                        
+                        // Get the current end time or use now
+                        const toEl = document.getElementById("toTimestamp") as HTMLInputElement;
+                        let toTimestamp = Date.now();
+                        
+                        if (toEl?.value) {
+                          toTimestamp = new Date(toEl.value).getTime();
+                        } else {
+                          // If no end time set, default to now
+                          toEl.value = formatDateForInput(toTimestamp);
                         }
-                      }
-                      
-                      // Store the from timestamp in a hidden input
-                      const hiddenFromEl = document.getElementById('hiddenFromTimestamp') as HTMLInputElement;
-                      if (hiddenFromEl) {
-                        hiddenFromEl.value = fromDate.getTime().toString();
-                      }
-                    }}
-                  >
-                    LAST WEEK
-                  </Button>
+                        
+                        // Calculate from date based on selected days
+                        const fromTimestamp = toTimestamp - (days * 24 * 60 * 60 * 1000);
+                        
+                        // Store in hidden input
+                        const hiddenFromEl = document.getElementById('hiddenFromTimestamp') as HTMLInputElement;
+                        if (hiddenFromEl) {
+                          hiddenFromEl.value = fromTimestamp.toString();
+                        }
+                        
+                        // Update lookback display
+                        const lookbackDisplayEl = document.getElementById('lookbackDisplay');
+                        if (lookbackDisplayEl) {
+                          lookbackDisplayEl.textContent = `${days} day${days > 1 ? 's' : ''} ago`;
+                        }
+                      }}
+                    >
+                      {days}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Visual indicator of selected lookback */}
+                <div className="flex justify-between items-center bg-black/30 p-2 border border-primary/30 rounded-sm">
+                  <span className="text-xs text-foreground/70 uppercase">FROM:</span>
+                  <span id="lookbackDisplay" className="text-xs text-primary font-mono">1 day ago</span>
                 </div>
                 
                 {/* Hidden input to store fromTimestamp */}
                 <input 
                   type="hidden" 
                   id="hiddenFromTimestamp" 
-                  value={Date.now() - 24 * 60 * 60 * 1000} // Default to 24 hours ago
+                  value={Date.now() - 24 * 60 * 60 * 1000} // Default to 1 day ago
                 />
                 
                 <div className="text-xs text-primary/70 italic mt-2">
