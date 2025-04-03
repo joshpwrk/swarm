@@ -764,15 +764,7 @@ export default function GraphVisualization({
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <div className="flex items-center">
-                <a 
-                  href={selectedNode ? `https://www.derive.xyz/user/${selectedNode.id}` : "#"} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm hover:underline"
-                  id="info-wallet"
-                >
-                  Wallet Address
-                </a>
+                <div className="font-bold text-primary uppercase tracking-widest text-xs md:text-sm" id="info-wallet">Wallet Address</div>
                 <button 
                   onClick={() => selectedNode && copyWalletToClipboard(selectedNode.id)}
                   className="ml-2 p-1 text-primary hover:bg-primary/20 rounded"
