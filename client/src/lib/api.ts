@@ -11,13 +11,13 @@ export async function fetchTradeHistory(
   onProgress?: (progress: FetchProgress) => void
 ): Promise<TradeData> {
   try {
-    // Ensure the time range is not more than 24 hours
+    // Ensure the time range is not more than 7 days
     const fromTimestamp = filters.fromTimestamp;
     const toTimestamp = filters.toTimestamp;
-    const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     
-    if ((toTimestamp - fromTimestamp) > oneDay) {
-      throw new Error('Time range cannot exceed 24 hours');
+    if ((toTimestamp - fromTimestamp) > oneWeek) {
+      throw new Error('Time range cannot exceed 7 days');
     }
 
     // Fetch first page to get total count
