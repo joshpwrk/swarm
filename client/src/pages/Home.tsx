@@ -57,16 +57,6 @@ export default function Home() {
       <header className="bg-black py-3 md:py-4 px-4 md:px-6 border-b border-primary">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            {isMobile && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mr-2 md:hidden text-primary p-1"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                <Settings size={18} />
-              </Button>
-            )}
             <h1 className="text-base md:text-xl font-bold tracking-wider uppercase text-primary">
               DERIVE // SWARM ANALYZER
             </h1>
@@ -149,10 +139,11 @@ export default function Home() {
           {isMobile && !sidebarOpen && (
             <div className="absolute bottom-20 right-4 z-20">
               <Button
-                className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg"
+                className="h-12 px-3 bg-black hover:bg-black/90 border border-primary text-primary uppercase tracking-widest text-xs shadow-lg"
                 onClick={() => setSidebarOpen(true)}
               >
-                <Settings size={24} />
+                <Settings size={16} className="mr-2" />
+                FILTER
               </Button>
             </div>
           )}
