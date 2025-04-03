@@ -66,6 +66,8 @@ export interface GraphNode extends WalletNode {
   fx?: number | null;
   fy?: number | null;
   size?: number; // Added for compatibility with existing code using d.size
+  normalizedSize?: number; // Value between 0-1 representing relative size to largest node
+  maxAmount?: number; // Reference to the largest totalAmount in the dataset
 }
 
 export interface GraphLink {

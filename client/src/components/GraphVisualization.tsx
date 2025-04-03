@@ -127,16 +127,33 @@ export default function GraphVisualization({
       }
     });
     
-    // Convert Maps to arrays for D3
-    const nodes = Array.from(walletMap.values()).map(wallet => ({
-      id: wallet.id,
-      totalAmount: wallet.totalAmount,
-      size: wallet.totalAmount, // Add size property for backwards compatibility
-      tradeCount: wallet.tradeCount,
-      buyCount: wallet.buyCount,
-      sellCount: wallet.sellCount,
-      type: wallet.buyCount > wallet.sellCount ? 'buyer' : wallet.sellCount > wallet.buyCount ? 'seller' : 'mixed'
-    } as GraphNode));
+    // Find the wallet with the highest total amount for scaling
+    let maxTotalAmount = 0;
+    walletMap.forEach(wallet => {
+      if (wallet.totalAmount > maxTotalAmount) {
+        maxTotalAmount = wallet.totalAmount;
+      }
+    });
+    
+    // Convert Maps to arrays for D3, scaling sizes relative to max amount
+    const nodes = Array.from(walletMap.values()).map(wallet => {
+      // Calculate normalized size - with minimum to ensure visibility of smaller nodes
+      const normalizedSize = maxTotalAmount > 0 
+        ? (wallet.totalAmount / maxTotalAmount) 
+        : 1;
+        
+      return {
+        id: wallet.id,
+        totalAmount: wallet.totalAmount,
+        maxAmount: maxTotalAmount, // Store for reference
+        size: wallet.totalAmount, // Keep original size for backwards compatibility
+        normalizedSize: normalizedSize, // Add normalized size for scaling (0-1)
+        tradeCount: wallet.tradeCount,
+        buyCount: wallet.buyCount,
+        sellCount: wallet.sellCount,
+        type: wallet.buyCount > wallet.sellCount ? 'buyer' : wallet.sellCount > wallet.buyCount ? 'seller' : 'mixed'
+      } as GraphNode;
+    });
     
     // Filter out incomplete links (without source or target)
     const links = Array.from(tradeLinks.values())
@@ -231,7 +248,7 @@ export default function GraphVisualization({
         .distance(100))
       .force("charge", d3.forceManyBody().strength(-visualSettings.forceStrength * 10))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collide", d3.forceCollide<GraphNode>().radius(d => Math.max(3, Math.sqrt(d.size) * visualSettings.nodeSizeScale / 10) + 5).iterations(2));
+      .force("collide", d3.forceCollide<GraphNode>().radius(d => Math.max(3, Math.sqrt(d.normalizedSize || 0) * 30 * (visualSettings.nodeSizeScale / 10)) + 5).iterations(2));
     
     // Draw links
     const links = linksGroup
